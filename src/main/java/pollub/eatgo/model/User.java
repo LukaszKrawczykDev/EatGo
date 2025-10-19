@@ -51,3 +51,4 @@ public class User {
         CLIENT, RESTAURANT_ADMIN, COURIER
     }
 }
+

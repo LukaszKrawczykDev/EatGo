@@ -67,6 +67,11 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-spring-boot-starter</artifactId>
+            <version>24.5.6</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -74,6 +79,19 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>11.9.0</version>
+                <configuration>
+                    <url>jdbc:postgresql://localhost:5432/eatgo</url>
+                    <user>eatgo_user</user>
+                    <password>eatgo_pass</password>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
+                </configuration>
             </plugin>
         </plugins>
     </build>

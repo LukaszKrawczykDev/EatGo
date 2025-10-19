@@ -24,5 +24,4 @@ spring:
     user: eatgo_user
     password: eatgo_pass
     locations: classpath:db/migration
-    # 👇 to kluczowa linia
     database-type: postgres

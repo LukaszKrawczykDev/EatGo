@@ -1,4 +1,3 @@
--- Użytkownicy (klienci, admini restauracji, kurierzy)
 CREATE TABLE users (
                        id BIGSERIAL PRIMARY KEY,
                        email VARCHAR(255) NOT NULL UNIQUE,
@@ -9,7 +8,6 @@ CREATE TABLE users (
                        updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Restauracje
 CREATE TABLE restaurants (
                              id BIGSERIAL PRIMARY KEY,
                              name VARCHAR(255) NOT NULL,
@@ -19,7 +17,6 @@ CREATE TABLE restaurants (
                              FOREIGN KEY (admin_id) REFERENCES users(id)
 );
 
--- Dania
 CREATE TABLE dishes (
                         id BIGSERIAL PRIMARY KEY,
                         restaurant_id BIGINT NOT NULL,
@@ -30,7 +27,6 @@ CREATE TABLE dishes (
                         FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
 );
 
--- Adresy klientów
 CREATE TABLE addresses (
                            id BIGSERIAL PRIMARY KEY,
                            user_id BIGINT NOT NULL,
@@ -40,7 +36,6 @@ CREATE TABLE addresses (
                            FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Zamówienia
 CREATE TABLE orders (
                         id BIGSERIAL PRIMARY KEY,
                         user_id BIGINT NOT NULL,
@@ -58,7 +53,6 @@ CREATE TABLE orders (
                         FOREIGN KEY (address_id) REFERENCES addresses(id)
 );
 
--- Pozycje zamówienia
 CREATE TABLE order_items (
                              id BIGSERIAL PRIMARY KEY,
                              order_id BIGINT NOT NULL,
@@ -69,7 +63,6 @@ CREATE TABLE order_items (
                              FOREIGN KEY (dish_id) REFERENCES dishes(id)
 );
 
--- Recenzje
 CREATE TABLE reviews (
                          id BIGSERIAL PRIMARY KEY,
                          order_id BIGINT NOT NULL,
