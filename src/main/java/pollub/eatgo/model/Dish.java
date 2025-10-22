@@ -26,6 +26,9 @@ public class Dish {
     @Positive
     private double price;
 
+    @Column(nullable = false)
+    private boolean available = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
