@@ -1,9 +1,9 @@
-package pollub.eatgo.service.client;
+package pollub.eatgo.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import pollub.eatgo.dto.client.AddressCreateDto;
-import pollub.eatgo.dto.client.AddressDto;
+import pollub.eatgo.dto.address.AddressCreateDto;
+import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.model.Address;
 import pollub.eatgo.repository.AddressRepository;
 

@@ -1,4 +1,4 @@
-package pollub.eatgo.dto.client;
+package pollub.eatgo.dto.restaurant;
 
 import java.math.BigDecimal;
 

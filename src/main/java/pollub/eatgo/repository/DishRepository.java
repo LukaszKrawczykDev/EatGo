@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface DishRepository extends JpaRepository<Dish, Long> {
     List<Dish> findByRestaurantIdAndAvailableTrue(Long restaurantId);
+    List<Dish> findByRestaurantId(Long restaurantId);
 }

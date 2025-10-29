@@ -5,9 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import pollub.eatgo.dto.client.*;
-import pollub.eatgo.service.client.AddressService;
-import pollub.eatgo.service.client.RestaurantService;
+import pollub.eatgo.dto.address.AddressCreateDto;
+import pollub.eatgo.dto.address.AddressDto;
+import pollub.eatgo.dto.dish.DishDto;
+import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
+import pollub.eatgo.service.AddressService;
+import pollub.eatgo.service.RestaurantService;
 
 import java.util.List;
 

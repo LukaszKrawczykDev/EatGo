@@ -1,4 +1,4 @@
-package pollub.eatgo.dto.client;
+package pollub.eatgo.dto.review;
 
 public enum ReviewTargetType {
     RESTAURANT, COURIER
