@@ -1,4 +1,6 @@
-package pollub.eatgo.dto.client;
+package pollub.eatgo.dto.order;
+
+import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

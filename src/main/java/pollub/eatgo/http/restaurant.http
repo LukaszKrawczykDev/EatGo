@@ -1,0 +1,94 @@
+@host = http://localhost:8080
+@token = <REPLACE_WITH_JWT>
+@orderId = 1
+@dishId = 1
+@courierId = 2
+
+### List orders
+
+GET {{host}}/api/restaurant/orders
+Authorization: Bearer {{token}}
+
+### Update order status
+
+PUT {{host}}/api/restaurant/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+"status": "COOKING"
+}
+
+### Assign courier
+
+PUT {{host}}/api/restaurant/orders/{{orderId}}/courier
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+"courierId": {{courierId}}
+}
+
+### Create dish
+
+POST {{host}}/api/restaurant/dishes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+"name": "Margherita",
+"description": "Classic pizza with tomatoes and mozzarella",
+"price": 29.99
+}
+
+### Update dish
+
+PUT {{host}}/api/restaurant/dishes/{{dishId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+"name": "Margherita Extra",
+"description": "Tomato, mozzarella, basil, extra cheese",
+"price": 34.50,
+"available": true
+}
+
+### Delete dish
+
+DELETE {{host}}/api/restaurant/dishes/{{dishId}}
+Authorization: Bearer {{token}}
+
+### List couriers
+
+GET {{host}}/api/restaurant/couriers
+Authorization: Bearer {{token}}
+
+### Create courier
+
+POST {{host}}/api/restaurant/couriers
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+"email": "[courier@example.com](mailto:courier@example.com)",
+"fullName": "Jan Kowalski",
+"password": "secret123"
+}
+
+### Delete courier
+
+DELETE {{host}}/api/restaurant/couriers/{{courierId}}
+Authorization: Bearer {{token}}
+
+### Update restaurant
+
+PUT {{host}}/api/restaurant/restaurant
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+"name": "Pizzeria Napoli",
+"address": "Rynek 1, 00-000 City",
+"deliveryPrice": 5.50
+}

@@ -1,0 +1,245 @@
+package pollub.eatgo.service;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import pollub.eatgo.dto.courier.CourierCreateDto;
+import pollub.eatgo.dto.courier.CourierDto;
+import pollub.eatgo.dto.dish.DishCreateDto;
+import pollub.eatgo.dto.dish.DishDto;
+import pollub.eatgo.dto.dish.DishUpdateDto;
+import pollub.eatgo.dto.order.OrderDto;
+import pollub.eatgo.dto.order.OrderItemDto;
+import pollub.eatgo.dto.restaurant.RestaurantDto;
+import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
+import pollub.eatgo.dto.restaurant.RestaurantUpdateDto;
+import pollub.eatgo.model.*;
+import pollub.eatgo.repository.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Połączony serwis dla funkcjonalności "restaurant" (admin) oraz podstawowych metod klienta.
+ * Usuń poprzednie duplikaty klas (zwłaszcza z pakietu service.client) aby uniknąć konfliktów.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class RestaurantService {
+
+    private final UserRepository userRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final OrderRepository orderRepository;
+    private final DishRepository dishRepository;
+
+    // ----------------- ADMIN / RESTAURANT (protected endpoints) -----------------
+
+    public List<OrderDto> listOrders(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        List<Order> orders = orderRepository.findByRestaurantId(restaurant.getId());
+        return orders.stream().map(this::toOrderDto).collect(Collectors.toList());
+    }
+
+    public OrderDto updateOrderStatus(String adminEmail, Long orderId, String status) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        if (!order.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to your restaurant");
+        }
+        order.setStatus(status);
+        order = orderRepository.save(order);
+        return toOrderDto(order);
+    }
+
+    public OrderDto assignCourier(String adminEmail, Long orderId, Long courierId) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        if (!order.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to your restaurant");
+        }
+        User courier = userRepository.findById(courierId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found"));
+        if (courier.getRole() != User.Role.COURIER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a courier");
+        }
+        order.setCourier(courier);
+        order = orderRepository.save(order);
+        return toOrderDto(order);
+    }
+
+    public DishDto addDish(String adminEmail, DishCreateDto req) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        Dish dish = Dish.builder()
+                .name(req.name())
+                .description(req.description())
+                .price(req.price() == null ? 0.0 : req.price())
+                .available(true)
+                .restaurant(restaurant)
+                .build();
+        dish = dishRepository.save(dish);
+        return toDishDto(dish);
+    }
+
+    public DishDto updateDish(String adminEmail, Long dishId, DishUpdateDto req) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        Dish dish = dishRepository.findById(dishId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish not found"));
+        if (!dish.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish does not belong to your restaurant");
+        }
+        dish.setName(req.name());
+        dish.setDescription(req.description());
+        if (req.price() != null) dish.setPrice(req.price());
+        if (req.available() != null) dish.setAvailable(req.available());
+        dish = dishRepository.save(dish);
+        return toDishDto(dish);
+    }
+
+    public void deleteDish(String adminEmail, Long dishId) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        Dish dish = dishRepository.findById(dishId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish not found"));
+        if (!dish.getRestaurant().getId().equals(restaurant.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish does not belong to your restaurant");
+        }
+        dishRepository.delete(dish);
+    }
+
+    public List<CourierDto> listCouriers() {
+        return userRepository.findByRole(User.Role.COURIER).stream()
+                .map(this::toCourierDto)
+                .collect(Collectors.toList());
+    }
+
+    public CourierDto createCourier(CourierCreateDto req) {
+        if (userRepository.findByEmail(req.email()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User with this email already exists");
+        }
+        User courier = User.builder()
+                .email(req.email())
+                .fullName(req.fullName())
+                .password(req.password()) // NOTE: hash password before saving in production
+                .role(User.Role.COURIER)
+                .build();
+        courier = userRepository.save(courier);
+        return toCourierDto(courier);
+    }
+
+    public void deleteCourier(Long courierId) {
+        User courier = userRepository.findById(courierId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found"));
+        if (courier.getRole() != User.Role.COURIER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a courier");
+        }
+        userRepository.delete(courier);
+    }
+
+    public RestaurantDto updateRestaurant(String adminEmail, RestaurantUpdateDto req) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        restaurant.setName(req.name());
+        restaurant.setAddress(req.address());
+        restaurant.setDeliveryPrice(req.deliveryPrice() == null ? 0.0 : req.deliveryPrice());
+        restaurant = restaurantRepository.save(restaurant);
+        return toRestaurantDto(restaurant);
+    }
+
+    public List<RestaurantSummaryDto> listRestaurants() {
+        return restaurantRepository.findAll().stream()
+                .map(r -> new RestaurantSummaryDto(
+                        r.getId(),
+                        r.getName(),
+                        r.getAddress(),
+                        BigDecimal.valueOf(r.getDeliveryPrice())
+                ))
+                .toList();
+    }
+
+    public List<DishDto> getMenu(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found"));
+
+        return dishRepository.findByRestaurantIdAndAvailableTrue(restaurant.getId()).stream()
+                .map(d -> new DishDto(
+                        d.getId(),
+                        d.getName(),
+                        d.getDescription(),
+                        d.getPrice(),
+                        d.isAvailable(),
+                        restaurant.getId()
+                ))
+                .toList();
+    }
+
+    // ----------------- helpers / mappers -----------------
+
+    private Restaurant resolveRestaurantForAdmin(String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin user not found"));
+        if (admin.getRole() != User.Role.RESTAURANT_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not restaurant admin");
+        }
+        return restaurantRepository.findByAdminId(admin.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant for admin not found"));
+    }
+
+    private DishDto toDishDto(Dish dish) {
+        return new DishDto(
+                dish.getId(),
+                dish.getName(),
+                dish.getDescription(),
+                dish.getPrice(),
+                dish.isAvailable(),
+                dish.getRestaurant() != null ? dish.getRestaurant().getId() : null
+        );
+    }
+
+    private OrderItemDto toOrderItemDto(OrderItem oi) {
+        return new OrderItemDto(
+                oi.getId(),
+                oi.getDish() != null ? oi.getDish().getId() : null,
+                oi.getDish() != null ? oi.getDish().getName() : null,
+                oi.getQuantity(),
+                oi.getPriceSnapshot()
+        );
+    }
+
+    private OrderDto toOrderDto(Order order) {
+        List<OrderItemDto> items = order.getItems() == null ? List.of() :
+                order.getItems().stream().map(this::toOrderItemDto).collect(Collectors.toList());
+        LocalDateTime createdAt = order.getCreatedAt();
+        return new OrderDto(
+                order.getId(),
+                order.getStatus(),
+                order.getTotalPrice(),
+                order.getDeliveryPrice(),
+                createdAt,
+                items,
+                order.getUser() != null ? order.getUser().getId() : null,
+                order.getUser() != null ? order.getUser().getEmail() : null,
+                order.getCourier() != null ? order.getCourier().getId() : null,
+                order.getCourier() != null ? order.getCourier().getEmail() : null
+        );
+    }
+
+    private CourierDto toCourierDto(User u) {
+        return new CourierDto(u.getId(), u.getEmail(), u.getFullName());
+    }
+
+    private RestaurantDto toRestaurantDto(Restaurant r) {
+        return new RestaurantDto(
+                r.getId(),
+                r.getName(),
+                r.getAddress(),
+                r.getDeliveryPrice(),
+                r.getAdmin() != null ? r.getAdmin().getId() : null,
+                r.getAdmin() != null ? r.getAdmin().getEmail() : null
+        );
+    }
+}

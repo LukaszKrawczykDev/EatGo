@@ -1,4 +1,4 @@
-package pollub.eatgo.dto.client;
+package pollub.eatgo.dto.review;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
