@@ -1,11 +1,28 @@
-### Register client (creates CLIENT role)
+### Register CLIENT
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "client@example.com",
+  "password": "ClientPass123!",
+  "fullName": "Jan Kowalski",
+  "role": "CLIENT"
+}
+
+###
+
+### Register RESTAURANT_ADMIN (creates restaurant)
 POST http://localhost:8080/api/auth/register
 Content-Type: application/json
 
 {
   "email": "restaurant@test.com",
   "password": "RestaurantTestPass123!",
-  "fullName": "Restaurant Example"
+  "fullName": "Restaurant Example",
+  "role": "RESTAURANT_ADMIN",
+  "restaurantName": "Pizzeria Napoli",
+  "restaurantAddress": "Rynek 1, 00-000 City",
+  "restaurantDeliveryPrice": 5.50
 }
 
 ###
@@ -21,7 +38,7 @@ Content-Type: application/json
 
 ###
 
-# Login restaurant admin (account created by DataInitializer)
+# Login restaurant admin
 POST http://localhost:8080/api/auth/login
 Content-Type: application/json
 
@@ -32,7 +49,7 @@ Content-Type: application/json
 
 ###
 
-# Login courier (account created by DataInitializer)
+# Login courier (created by restaurant via /api/restaurant/couriers)
 POST http://localhost:8080/api/auth/login
 Content-Type: application/json
 
@@ -42,10 +59,10 @@ Content-Type: application/json
 }
 
 ###
-@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI5IiwiZW1haWwiOiJyZXN0YXVyYW50QHRlc3QuY29tIiwicm9sZSI6IlJFU1RBVVJBTlRfQURNSU4iLCJpYXQiOjE3NjIzMzg5NzIsImV4cCI6MTc2MjQyNTM3Mn0.bsKSSIERE9vLAdcmHLy9Wdx5vXVzRHq-xWuZ2OyKzSs
+@token = <REPLACE_WITH_JWT>
 
 # Example: call a RESTAURANT_ADMIN-only endpoint (replace TOKEN with token from admin login)
-GET http://localhost:8080/api/restaurant/orders
+GET http://localhost:8080/api/admin/orders
 Authorization: Bearer {{token}}
 
 ###

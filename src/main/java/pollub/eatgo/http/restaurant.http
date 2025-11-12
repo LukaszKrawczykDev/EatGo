@@ -1,5 +1,5 @@
 @host = http://localhost:8080
-@token = <REPLACE_WITH_JWT>
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3IiwiZW1haWwiOiJyZXN0YXVyYW50QHRlc3QuY29tIiwicm9sZSI6IlJFU1RBVVJBTlRfQURNSU4iLCJpYXQiOjE3NjI5NDQxMTcsImV4cCI6MTc2MzAzMDUxN30.MU2wndkofdZKOHb3hr3h8sWhHh6dRb2m04pcIKkfWNY
 @orderId = 1
 @dishId = 1
 @courierId = 2
@@ -79,6 +79,11 @@ Authorization: Bearer {{token}}
 ### Delete courier
 
 DELETE {{host}}/api/restaurant/couriers/{{courierId}}
+Authorization: Bearer {{token}}
+
+### List restaurant reviews
+
+GET {{host}}/api/restaurant/reviews
 Authorization: Bearer {{token}}
 
 ### Update restaurant
