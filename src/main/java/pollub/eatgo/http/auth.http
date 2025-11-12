@@ -1,0 +1,55 @@
+### Register client (creates CLIENT role)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "restaurant@test.com",
+  "password": "RestaurantTestPass123!",
+  "fullName": "Restaurant Example"
+}
+
+###
+
+# Login client
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@example.com",
+  "password": "ClientPass123!"
+}
+
+###
+
+# Login restaurant admin (account created by DataInitializer)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "restaurant@test.com",
+  "password": "RestaurantTestPass123!"
+}
+
+###
+
+# Login courier (account created by DataInitializer)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "courier@test.com",
+  "password": "CourierTestPass123!"
+}
+
+###
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI5IiwiZW1haWwiOiJyZXN0YXVyYW50QHRlc3QuY29tIiwicm9sZSI6IlJFU1RBVVJBTlRfQURNSU4iLCJpYXQiOjE3NjIzMzg5NzIsImV4cCI6MTc2MjQyNTM3Mn0.bsKSSIERE9vLAdcmHLy9Wdx5vXVzRHq-xWuZ2OyKzSs
+
+# Example: call a RESTAURANT_ADMIN-only endpoint (replace TOKEN with token from admin login)
+GET http://localhost:8080/api/restaurant/orders
+Authorization: Bearer {{token}}
+
+###
+
+# Example: call a CLIENT-only endpoint (replace TOKEN with token from client login)
+GET http://localhost:8080/api/addresses
+Authorization: Bearer TOKEN

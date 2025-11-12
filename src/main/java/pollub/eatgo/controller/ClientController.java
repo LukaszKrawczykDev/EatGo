@@ -9,6 +9,8 @@ import pollub.eatgo.dto.address.AddressCreateDto;
 import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
+import pollub.eatgo.model.User;
+import pollub.eatgo.repository.UserRepository;
 import pollub.eatgo.service.AddressService;
 import pollub.eatgo.service.RestaurantService;
 
@@ -21,6 +23,7 @@ public class ClientController {
 
     private final RestaurantService restaurantService;
     private final AddressService addressService;
+    private final UserRepository userRepository;
 
     @GetMapping("/restaurants")
     public List<RestaurantSummaryDto> getRestaurants() {
@@ -48,10 +51,13 @@ public class ClientController {
     private Long getUserId(Authentication auth) {
         if (auth == null || auth.getName() == null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
-        try {
-            return Long.parseLong(auth.getName());
-        } catch (NumberFormatException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user id");
-        }
+
+        String email = auth.getName(); // teraz auth.getName() = email
+
+        // zamiast isEmpty()/get() używamy orElseThrow, działa w Java 8+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        return user.getId();
     }
 }
