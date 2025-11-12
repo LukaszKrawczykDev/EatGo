@@ -1,7 +1,5 @@
-// file: pollub/eatgo/dto/order/OrderDto.java
 package pollub.eatgo.dto.order;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
