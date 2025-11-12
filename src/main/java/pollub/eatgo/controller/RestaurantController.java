@@ -14,17 +14,20 @@ import pollub.eatgo.dto.dish.DishUpdateDto;
 import pollub.eatgo.dto.order.*;
 import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.dto.restaurant.RestaurantUpdateDto;
+import pollub.eatgo.dto.review.ReviewDto;
 import pollub.eatgo.service.RestaurantService;
+import pollub.eatgo.service.ReviewService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/restaurant")
+@RequestMapping({"/api/restaurant", "/api/admin"})
 @RequiredArgsConstructor
 @Validated
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
+    private final ReviewService reviewService;
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderDto>> listOrders(Authentication auth) {
@@ -72,20 +75,27 @@ public class RestaurantController {
 
     @GetMapping("/couriers")
     public ResponseEntity<List<CourierDto>> listCouriers(Authentication auth) {
-        // optional: could check auth/role here
-        return ResponseEntity.ok(restaurantService.listCouriers());
+        String email = auth.getName();
+        return ResponseEntity.ok(restaurantService.listCouriers(email));
     }
 
     @PostMapping("/couriers")
     public ResponseEntity<CourierDto> createCourier(Authentication auth, @RequestBody @Valid CourierCreateDto body) {
-        // optional: could check auth/role here
-        return ResponseEntity.ok(restaurantService.createCourier(body));
+        String email = auth.getName();
+        return ResponseEntity.ok(restaurantService.createCourier(email, body));
     }
 
     @DeleteMapping("/couriers/{id}")
     public ResponseEntity<Void> deleteCourier(Authentication auth, @PathVariable Long id) {
-        restaurantService.deleteCourier(id);
+        String email = auth.getName();
+        restaurantService.deleteCourier(email, id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/reviews")
+    public ResponseEntity<List<ReviewDto>> listReviews(Authentication auth) {
+        String email = auth.getName();
+        return ResponseEntity.ok(reviewService.getReviewsForAdmin(email));
     }
 
     @PutMapping("/restaurant")

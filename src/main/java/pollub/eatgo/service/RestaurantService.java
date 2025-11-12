@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import pollub.eatgo.dto.courier.CourierCreateDto;
 import pollub.eatgo.dto.courier.CourierDto;
 import pollub.eatgo.dto.dish.DishCreateDto;
@@ -16,6 +17,7 @@ import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 import pollub.eatgo.dto.restaurant.RestaurantUpdateDto;
 import pollub.eatgo.model.*;
+import pollub.eatgo.model.OrderStatus;
 import pollub.eatgo.repository.*;
 
 import java.math.BigDecimal;
@@ -36,12 +38,13 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final OrderRepository orderRepository;
     private final DishRepository dishRepository;
+	private final PasswordEncoder passwordEncoder;
 
     // ----------------- ADMIN / RESTAURANT (protected endpoints) -----------------
 
     public List<OrderDto> listOrders(String adminEmail) {
         Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
-        List<Order> orders = orderRepository.findByRestaurantId(restaurant.getId());
+        List<Order> orders = orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurant.getId());
         return orders.stream().map(this::toOrderDto).collect(Collectors.toList());
     }
 
@@ -52,7 +55,12 @@ public class RestaurantService {
         if (!order.getRestaurant().getId().equals(restaurant.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to your restaurant");
         }
-        order.setStatus(status);
+        OrderStatus targetStatus = parseOrderStatus(status);
+        validateAdminTransition(order.getStatus(), targetStatus);
+        if (targetStatus == OrderStatus.IN_DELIVERY && order.getCourier() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assign courier before marking order IN_DELIVERY");
+        }
+        order.setStatus(targetStatus);
         order = orderRepository.save(order);
         return toOrderDto(order);
     }
@@ -64,12 +72,13 @@ public class RestaurantService {
         if (!order.getRestaurant().getId().equals(restaurant.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to your restaurant");
         }
-        User courier = userRepository.findById(courierId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found"));
-        if (courier.getRole() != User.Role.COURIER) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a courier");
+        if (order.getStatus() != OrderStatus.READY) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order must be READY before assigning courier");
         }
+        User courier = userRepository.findByIdAndRestaurantId(courierId, restaurant.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Courier not found for your restaurant"));
         order.setCourier(courier);
+        order.setStatus(OrderStatus.IN_DELIVERY);
         order = orderRepository.save(order);
         return toOrderDto(order);
     }
@@ -112,32 +121,33 @@ public class RestaurantService {
         dishRepository.delete(dish);
     }
 
-    public List<CourierDto> listCouriers() {
-        return userRepository.findByRole(User.Role.COURIER).stream()
+    public List<CourierDto> listCouriers(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        return userRepository.findByRestaurantIdAndRole(restaurant.getId(), User.Role.COURIER).stream()
                 .map(this::toCourierDto)
                 .collect(Collectors.toList());
     }
 
-    public CourierDto createCourier(CourierCreateDto req) {
+    public CourierDto createCourier(String adminEmail, CourierCreateDto req) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
         if (userRepository.findByEmail(req.email()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User with this email already exists");
         }
         User courier = User.builder()
                 .email(req.email())
                 .fullName(req.fullName())
-                .password(req.password()) // NOTE: hash password before saving in production
+				.password(passwordEncoder.encode(req.password()))
                 .role(User.Role.COURIER)
+                .restaurant(restaurant)
                 .build();
         courier = userRepository.save(courier);
         return toCourierDto(courier);
     }
 
-    public void deleteCourier(Long courierId) {
-        User courier = userRepository.findById(courierId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found"));
-        if (courier.getRole() != User.Role.COURIER) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not a courier");
-        }
+    public void deleteCourier(String adminEmail, Long courierId) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        User courier = userRepository.findByIdAndRestaurantId(courierId, restaurant.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found for your restaurant"));
         userRepository.delete(courier);
     }
 
@@ -179,6 +189,48 @@ public class RestaurantService {
 
     // ----------------- helpers / mappers -----------------
 
+    private OrderStatus parseOrderStatus(String value) {
+        try {
+            return OrderStatus.valueOf(value.toUpperCase());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + value);
+        }
+    }
+
+    private void validateAdminTransition(OrderStatus current, OrderStatus target) {
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order status is undefined");
+        }
+        switch (current) {
+            case PLACED -> {
+                if (target != OrderStatus.ACCEPTED && target != OrderStatus.CANCELLED) {
+                    throw invalidTransition(current, target);
+                }
+            }
+            case ACCEPTED -> {
+                if (target != OrderStatus.COOKING && target != OrderStatus.CANCELLED) {
+                    throw invalidTransition(current, target);
+                }
+            }
+            case COOKING -> {
+                if (target != OrderStatus.READY && target != OrderStatus.CANCELLED) {
+                    throw invalidTransition(current, target);
+                }
+            }
+            case READY -> {
+                if (target != OrderStatus.IN_DELIVERY && target != OrderStatus.CANCELLED) {
+                    throw invalidTransition(current, target);
+                }
+            }
+            case IN_DELIVERY, DELIVERED, CANCELLED ->
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change status once in " + current);
+        }
+    }
+
+    private ResponseStatusException invalidTransition(OrderStatus from, OrderStatus to) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change status from " + from + " to " + to);
+    }
+
     private Restaurant resolveRestaurantForAdmin(String adminEmail) {
         User admin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin user not found"));
@@ -216,7 +268,7 @@ public class RestaurantService {
         LocalDateTime createdAt = order.getCreatedAt();
         return new OrderDto(
                 order.getId(),
-                order.getStatus(),
+                order.getStatus() != null ? order.getStatus().name() : null,
                 order.getTotalPrice(),
                 order.getDeliveryPrice(),
                 createdAt,
@@ -229,7 +281,7 @@ public class RestaurantService {
     }
 
     private CourierDto toCourierDto(User u) {
-        return new CourierDto(u.getId(), u.getEmail(), u.getFullName());
+        return new CourierDto(u.getId(), u.getEmail(), u.getFullName(), u.getRestaurant() != null ? u.getRestaurant().getId() : null);
     }
 
     private RestaurantDto toRestaurantDto(Restaurant r) {

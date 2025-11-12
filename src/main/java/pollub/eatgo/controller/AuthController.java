@@ -13,6 +13,8 @@ import pollub.eatgo.dto.auth.AuthDto;
 import pollub.eatgo.model.User;
 import pollub.eatgo.repository.UserRepository;
 import pollub.eatgo.security.JwtUtil;
+import pollub.eatgo.model.Restaurant;
+import pollub.eatgo.repository.RestaurantRepository;
 
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+	private final RestaurantRepository restaurantRepository;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid AuthDto.RegisterRequest body) {
@@ -33,14 +36,44 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already in use");
         }
 
-        User user = User.builder()
-                .email(body.getEmail())
-                .password(passwordEncoder.encode(body.getPassword()))
-                .fullName(body.getFullName())
-                .role(User.Role.CLIENT)
-                .build();
+		// Wybór roli: CLIENT albo RESTAURANT_ADMIN
+		if (body.getRole() == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Role is required");
+		}
+		User.Role role;
+		try {
+			role = User.Role.valueOf(body.getRole().toUpperCase());
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid role. Use CLIENT or RESTAURANT_ADMIN");
+		}
+
+		User user = User.builder()
+				.email(body.getEmail())
+				.password(passwordEncoder.encode(body.getPassword()))
+				.fullName(body.getFullName())
+				.role(role)
+				.build();
 
         user = userRepository.save(user);
+
+		if (role == User.Role.RESTAURANT_ADMIN) {
+			// Walidacja wymaganych pól restauracji
+			if (body.getRestaurantName() == null || body.getRestaurantName().isBlank()
+					|| body.getRestaurantAddress() == null || body.getRestaurantAddress().isBlank()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("restaurantName and restaurantAddress are required for RESTAURANT_ADMIN");
+			}
+			double delivery = body.getRestaurantDeliveryPrice() == null ? 0.0 : body.getRestaurantDeliveryPrice();
+			if (delivery < 0) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("restaurantDeliveryPrice must be >= 0");
+			}
+			Restaurant restaurant = Restaurant.builder()
+					.name(body.getRestaurantName())
+					.address(body.getRestaurantAddress())
+					.deliveryPrice(delivery)
+					.admin(user)
+					.build();
+			restaurantRepository.save(restaurant);
+		}
 
         String token = jwtUtil.generateToken(user);
 

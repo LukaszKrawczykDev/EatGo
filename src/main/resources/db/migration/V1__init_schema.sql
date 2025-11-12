@@ -4,6 +4,7 @@ CREATE TABLE users (
                        password VARCHAR(255) NOT NULL,
                        full_name VARCHAR(255) NOT NULL,
                        role VARCHAR(50) NOT NULL,
+                       restaurant_id BIGINT,
                        created_at TIMESTAMP DEFAULT NOW(),
                        updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -16,6 +17,10 @@ CREATE TABLE restaurants (
                              admin_id BIGINT NOT NULL,
                              FOREIGN KEY (admin_id) REFERENCES users(id)
 );
+
+ALTER TABLE users
+    ADD CONSTRAINT fk_users_restaurant
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id);
 
 CREATE TABLE dishes (
                         id BIGSERIAL PRIMARY KEY,
@@ -42,7 +47,7 @@ CREATE TABLE orders (
                         restaurant_id BIGINT NOT NULL,
                         courier_id BIGINT,
                         address_id BIGINT NOT NULL,
-                        status VARCHAR(50) NOT NULL DEFAULT 'NEW',
+                        status VARCHAR(50) NOT NULL DEFAULT 'PLACED',
                         total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
                         delivery_price NUMERIC(10,2) NOT NULL DEFAULT 0,
                         created_at TIMESTAMP DEFAULT NOW(),

@@ -18,6 +18,12 @@ public class AuthDto {
         private String password;
         @NotBlank
         private String fullName;
+		@NotBlank
+		private String role; // CLIENT albo RESTAURANT_ADMIN
+		// Pola wymagane tylko dla RESTAURANT_ADMIN:
+		private String restaurantName;
+		private String restaurantAddress;
+		private Double restaurantDeliveryPrice;
     }
 
     @Data

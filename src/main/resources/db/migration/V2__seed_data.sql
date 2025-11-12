@@ -6,17 +6,19 @@ ALTER SEQUENCE orders_id_seq RESTART WITH 3;
 ALTER SEQUENCE order_items_id_seq RESTART WITH 3;
 ALTER SEQUENCE reviews_id_seq RESTART WITH 3;
 
-INSERT INTO users (id, email, password, full_name, role, created_at, updated_at) VALUES
-                                                                                     (1, 'admin@pizza.pl',    '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Pizza',   'RESTAURANT_ADMIN', NOW(), NOW()),
-                                                                                     (2, 'admin@burger.pl',   '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Burger',  'RESTAURANT_ADMIN', NOW(), NOW()),
-                                                                                     (3, 'courier1@eatgo.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Jan',    'COURIER', NOW(), NOW()),
-                                                                                     (4, 'courier2@eatgo.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Anna',   'COURIER', NOW(), NOW()),
-                                                                                     (5, 'client1@eatgo.pl',  '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Marek Klient',  'CLIENT', NOW(), NOW()),
-                                                                                     (6, 'client2@eatgo.pl',  '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kasia Klient',  'CLIENT', NOW(), NOW());
+INSERT INTO users (id, email, password, full_name, role, restaurant_id, created_at, updated_at) VALUES
+                                                                                     (1, 'admin@pizza.pl',    '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Pizza',   'RESTAURANT_ADMIN', NULL, NOW(), NOW()),
+                                                                                     (2, 'admin@burger.pl',   '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Burger',  'RESTAURANT_ADMIN', NULL, NOW(), NOW()),
+                                                                                     (5, 'client1@eatgo.pl',  '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Marek Klient',  'CLIENT', NULL, NOW(), NOW()),
+                                                                                     (6, 'client2@eatgo.pl',  '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kasia Klient',  'CLIENT', NULL, NOW(), NOW());
 
 INSERT INTO restaurants (id, name, address, delivery_price, admin_id) VALUES
                                                                           (1, 'Pizza Planet', 'ul. Słoneczna 5, Warszawa', 5.00, 1),
                                                                           (2, 'Burger Town', 'ul. Kwiatowa 12, Kraków', 7.00, 2);
+
+INSERT INTO users (id, email, password, full_name, role, restaurant_id, created_at, updated_at) VALUES
+                                                                                     (3, 'courier1@eatgo.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Jan',    'COURIER', 1, NOW(), NOW()),
+                                                                                     (4, 'courier2@eatgo.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Anna',   'COURIER', 2, NOW(), NOW());
 
 INSERT INTO dishes (id, restaurant_id, name, description, price, available) VALUES
                                                                                 (1, 1, 'Margherita', 'Klasyczna pizza z sosem pomidorowym i serem', 24.99, TRUE),

@@ -51,8 +51,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/restaurants").permitAll()
-                        .requestMatchers("/api/restaurants/*/menu").permitAll()
-                        .requestMatchers("/api/restaurant/**").hasRole("RESTAURANT_ADMIN")
+                        .requestMatchers("/api/restaurants/*/menu", "/api/restaurants/*/reviews").permitAll()
+						.requestMatchers("/api/restaurant/**", "/api/admin/**").hasRole("RESTAURANT_ADMIN")
                         .requestMatchers("/api/courier/**").hasRole("COURIER")
                         .requestMatchers("/api/addresses/**", "/api/orders/**", "/api/reviews/**").hasRole("CLIENT")
                         .anyRequest().authenticated()
