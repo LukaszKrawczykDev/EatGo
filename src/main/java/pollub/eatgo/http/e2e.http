@@ -1,0 +1,204 @@
+@host = http://localhost:8080
+
+### 1) Rejestracja RESTAURANT_ADMIN (tworzy restaurację)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@pizza.com",
+  "password": "AdminStrong123!",
+  "fullName": "Pizza Admin",
+  "role": "RESTAURANT_ADMIN",
+  "restaurantName": "Pizza House",
+  "restaurantAddress": "Rynek 10, 00-000 City",
+  "restaurantDeliveryPrice": 6.5
+}
+
+### 2) Logowanie admina
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@pizza.com",
+  "password": "AdminStrong123!"
+}
+
+### Wklej tu token admina
+@adminToken = <REPLACE_WITH_ADMIN_JWT>
+
+### 3) Admin tworzy dania
+POST {{host}}/api/admin/dishes
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Margherita",
+  "description": "Tomato, mozzarella, basil",
+  "price": 28.50
+}
+
+### 4) Admin tworzy kuriera
+POST {{host}}/api/admin/couriers
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "email": "courier@pizza.com",
+  "fullName": "Kurier Pizza",
+  "password": "CourierStrong123!"
+}
+
+### Ustal courierId wg odpowiedzi (np. 2)
+@courierId = 2
+
+### 5) Rejestracja CLIENT
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "client@foo.com",
+  "password": "ClientStrong123!",
+  "fullName": "Jan Kowalski",
+  "role": "CLIENT"
+}
+
+### 6) Logowanie klienta
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@foo.com",
+  "password": "ClientStrong123!"
+}
+
+### Wklej tu token klienta
+@clientToken = <REPLACE_WITH_CLIENT_JWT>
+
+### 7) Klient dodaje adres
+POST {{host}}/api/addresses
+Content-Type: application/json
+Authorization: Bearer {{clientToken}}
+
+{
+  "city": "City",
+  "street": "Ulica 1",
+  "postalCode": "00-000"
+}
+
+### 8) Klient pobiera restauracje i menu
+GET {{host}}/api/restaurants
+
+### Załóżmy restaurantId=1, addressId=1, dishId=1
+@restaurantId = 1
+@addressId = 1
+@dishId = 1
+
+### 9) Klient składa zamówienie
+POST {{host}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{clientToken}}
+
+{
+  "restaurantId": {{restaurantId}},
+  "addressId": {{addressId}},
+  "items": [
+    { "dishId": {{dishId}}, "quantity": 2 }
+  ]
+}
+
+### Przyjmijmy orderId=1
+@orderId = 1
+
+### 10) Admin akceptuje zamówienie
+PUT {{host}}/api/admin/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "ACCEPTED"
+}
+
+### 11) Admin zmienia status na COOKING
+PUT {{host}}/api/admin/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "COOKING"
+}
+
+### 12) Admin zmienia status na READY
+PUT {{host}}/api/admin/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "READY"
+}
+
+### 13) Admin przypisuje kuriera (status automatycznie IN_DELIVERY)
+PUT {{host}}/api/admin/orders/{{orderId}}/courier
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "courierId": {{courierId}}
+}
+
+### 14) Kurier logowanie
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "courier@pizza.com",
+  "password": "CourierStrong123!"
+}
+
+### Wklej tu token kuriera
+@courierToken = <REPLACE_WITH_COURIER_JWT>
+
+### 15) Kurier oznacza jako DELIVERED
+PUT {{host}}/api/courier/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{courierToken}}
+
+{
+  "status": "DELIVERED"
+}
+
+### 16) Klient wystawia recenzję restauracji
+POST {{host}}/api/reviews
+Content-Type: application/json
+Authorization: Bearer {{clientToken}}
+
+{
+  "orderId": {{orderId}},
+  "targetType": "RESTAURANT",
+  "rating": 5,
+  "comment": "Świetnie!"
+}
+
+### 17) Klient wystawia recenzję kuriera
+POST {{host}}/api/reviews
+Content-Type: application/json
+Authorization: Bearer {{clientToken}}
+
+{
+  "orderId": {{orderId}},
+  "targetType": "COURIER",
+  "rating": 5,
+  "comment": "Super dostawa!"
+}
+
+### 18) Publiczny podgląd recenzji restauracji
+GET {{host}}/api/restaurants/{{restaurantId}}/reviews
+
+### 19) Admin sprawdza recenzje swojej restauracji
+GET {{host}}/api/admin/reviews
+Authorization: Bearer {{adminToken}}
+
+### 20) Kurier sprawdza własne recenzje
+GET {{host}}/api/courier/reviews
+Authorization: Bearer {{courierToken}}
+
+

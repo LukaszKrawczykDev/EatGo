@@ -1,0 +1,22 @@
+@host = http://localhost:8080
+@token = <REPLACE_WITH_COURIER_JWT>
+@orderId = 1
+
+### List assigned orders (COURIER)
+GET {{host}}/api/courier/orders
+Authorization: Bearer {{token}}
+
+### My reviews (COURIER)
+GET {{host}}/api/courier/reviews
+Authorization: Bearer {{token}}
+
+### Update order status (IN_DELIVERY -> DELIVERED) (COURIER)
+PUT {{host}}/api/courier/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "status": "DELIVERED"
+}
+
+

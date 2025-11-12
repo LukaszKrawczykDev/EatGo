@@ -1,0 +1,34 @@
+@host = http://localhost:8080
+@token = <REPLACE_WITH_CLIENT_JWT>
+@orderId = 1
+@restaurantId = 1
+
+### Add review for RESTAURANT (CLIENT, only after DELIVERED)
+POST {{host}}/api/reviews
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId": {{orderId}},
+  "targetType": "RESTAURANT",
+  "rating": 5,
+  "comment": "Pyszne jedzenie i szybka dostawa."
+}
+
+### Add review for COURIER (CLIENT, only after DELIVERED and courier assigned)
+POST {{host}}/api/reviews
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId": {{orderId}},
+  "targetType": "COURIER",
+  "rating": 5,
+  "comment": "Miły kurier, dostawa na czas."
+}
+
+### Public list reviews for restaurant
+GET {{host}}/api/restaurants/{{restaurantId}}/reviews
+
+
+

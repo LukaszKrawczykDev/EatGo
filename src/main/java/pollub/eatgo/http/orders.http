@@ -1,0 +1,27 @@
+@host = http://localhost:8080
+@token = <REPLACE_WITH_CLIENT_JWT>
+@orderId = 1
+
+### Create order (CLIENT)
+POST {{host}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "restaurantId": 1,
+  "addressId": 1,
+  "items": [
+    { "dishId": 1, "quantity": 2 },
+    { "dishId": 2, "quantity": 1 }
+  ]
+}
+
+### List my orders (CLIENT)
+GET {{host}}/api/orders
+Authorization: Bearer {{token}}
+
+### Order details (CLIENT)
+GET {{host}}/api/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+
