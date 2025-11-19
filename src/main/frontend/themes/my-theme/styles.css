@@ -1,3 +1,18 @@
-/* Custom theme overrides can be added here */
+/* EatGo - Nowoczesny design z systemem motywów */
+/* Import modułów CSS */
+@import url('variables.css');
+@import url('common.css');
+@import url('animations.css');
+@import url('home.css');
+@import url('header.css');
+@import url('footer.css');
+@import url('search.css');
+@import url('categories.css');
+@import url('restaurants.css');
+@import url('menu.css');
 
-
+/* ===== Utility ===== */
+vaadin-text-field.search-input::part(input-field) {
+  background: white;
+  border-radius: 16px;
+}

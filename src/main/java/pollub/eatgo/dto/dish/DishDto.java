@@ -6,5 +6,6 @@ public record DishDto(
         String description,
         double price,
         boolean available,
-        Long restaurantId
+        Long restaurantId,
+        String category
 ) {}

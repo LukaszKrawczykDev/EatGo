@@ -126,7 +126,8 @@ public class OrderService {
 						order.getRestaurant().getId(),
 						order.getRestaurant().getName(),
 						order.getRestaurant().getAddress(),
-						BigDecimal.valueOf(order.getRestaurant().getDeliveryPrice())
+						BigDecimal.valueOf(order.getRestaurant().getDeliveryPrice()),
+						order.getRestaurant().getImageUrl()
 				),
 				items,
 				new pollub.eatgo.dto.address.AddressDto(

@@ -166,7 +166,8 @@ public class RestaurantService {
                         r.getId(),
                         r.getName(),
                         r.getAddress(),
-                        BigDecimal.valueOf(r.getDeliveryPrice())
+                        BigDecimal.valueOf(r.getDeliveryPrice()),
+                        r.getImageUrl()
                 ))
                 .toList();
     }
@@ -182,7 +183,8 @@ public class RestaurantService {
                         d.getDescription(),
                         d.getPrice(),
                         d.isAvailable(),
-                        restaurant.getId()
+                        restaurant.getId(),
+                        d.getCategory()
                 ))
                 .toList();
     }
@@ -248,7 +250,8 @@ public class RestaurantService {
                 dish.getDescription(),
                 dish.getPrice(),
                 dish.isAvailable(),
-                dish.getRestaurant() != null ? dish.getRestaurant().getId() : null
+                dish.getRestaurant() != null ? dish.getRestaurant().getId() : null,
+                dish.getCategory()
         );
     }
 

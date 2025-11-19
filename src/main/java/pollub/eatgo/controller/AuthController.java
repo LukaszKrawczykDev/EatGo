@@ -45,14 +45,14 @@ public class AuthController {
 			role = User.Role.valueOf(body.getRole().toUpperCase());
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid role. Use CLIENT or RESTAURANT_ADMIN");
-		}
+        }
 
-		User user = User.builder()
-				.email(body.getEmail())
-				.password(passwordEncoder.encode(body.getPassword()))
-				.fullName(body.getFullName())
+        User user = User.builder()
+                .email(body.getEmail())
+                .password(passwordEncoder.encode(body.getPassword()))
+                .fullName(body.getFullName())
 				.role(role)
-				.build();
+                .build();
 
         user = userRepository.save(user);
 

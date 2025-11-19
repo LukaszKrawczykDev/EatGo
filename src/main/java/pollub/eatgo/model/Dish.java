@@ -27,7 +27,10 @@ public class Dish {
     private double price;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean available = true;
+
+    private String category; // PIZZA, BURGER, SUSHI, ASIAN, MEXICAN, ITALIAN, etc.
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")

@@ -6,5 +6,6 @@ public record RestaurantSummaryDto(
         Long id,
         String name,
         String address,
-        BigDecimal deliveryPrice
+        BigDecimal deliveryPrice,
+        String imageUrl
 ) {}

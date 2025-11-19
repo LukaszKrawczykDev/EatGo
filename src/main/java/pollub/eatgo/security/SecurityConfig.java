@@ -49,12 +49,19 @@ public class SecurityConfig {
                 .authenticationProvider(authProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // Vaadin - dostęp publiczny do interfejsu
+                        .requestMatchers("/", "/VAADIN/**", "/HILLA/**", "/frontend/**", "/themes/**", "/sw.js", "/manifest.webmanifest", "/offline.html", "/offline-stub.html").permitAll()
+                        // Statyczne zasoby - zdjęcia
+                        .requestMatchers("/images/**", "/static/**").permitAll()
+                        // API - publiczne endpointy
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/restaurants").permitAll()
                         .requestMatchers("/api/restaurants/*/menu", "/api/restaurants/*/reviews").permitAll()
+                        // API - chronione endpointy
 						.requestMatchers("/api/restaurant/**", "/api/admin/**").hasRole("RESTAURANT_ADMIN")
                         .requestMatchers("/api/courier/**").hasRole("COURIER")
                         .requestMatchers("/api/addresses/**", "/api/orders/**", "/api/reviews/**").hasRole("CLIENT")
+                        // Wszystkie inne żądania wymagają uwierzytelnienia
                         .anyRequest().authenticated()
                 );
 

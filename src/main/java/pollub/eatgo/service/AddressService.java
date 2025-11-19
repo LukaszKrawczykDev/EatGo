@@ -20,7 +20,7 @@ public class AddressService {
 
     public AddressDto addAddress(Long userId, AddressCreateDto dto) {
 		User user = userRepository.findById(userId).orElseThrow();
-		Address address = new Address();
+        Address address = new Address();
         address.setCity(dto.city());
         address.setStreet(dto.street());
         address.setPostalCode(dto.postalCode());
