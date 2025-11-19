@@ -15,6 +15,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
+import pollub.eatgo.service.AuthenticationService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.views.components.HeaderComponent;
 import pollub.eatgo.views.components.FooterComponent;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class HomeView extends VerticalLayout {
 
     private final RestaurantService restaurantService;
+    private final AuthenticationService authService;
     private TextField searchField;
     private ComboBox<String> cityComboBox;
     private List<RestaurantSummaryDto> allRestaurants;
@@ -46,15 +48,16 @@ public class HomeView extends VerticalLayout {
         "ITALIAN", "🍝"
     );
 
-    public HomeView(RestaurantService restaurantService) {
+    public HomeView(RestaurantService restaurantService, AuthenticationService authService) {
         this.restaurantService = restaurantService;
+        this.authService = authService;
         
         setSizeFull();
         setSpacing(false);
         setPadding(false);
         addClassName("home-view");
         
-        add(new HeaderComponent());
+        add(new HeaderComponent(authService));
         add(createSearchSection());
         add(createCategoriesSection());
         add(createRestaurantsSection());

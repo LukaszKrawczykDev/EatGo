@@ -1,0 +1,190 @@
+/* ===== Search Section ===== */
+.search-section {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 5rem 2rem;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  overflow: visible;
+  animation: fadeIn 0.6s ease-out;
+  z-index: 1;
+}
+
+.search-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.search-content {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.city-selector-wrapper {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+.city-layout {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.city-layout vaadin-horizontal-layout {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+  width: auto !important;
+  flex-wrap: nowrap !important;
+}
+
+.city-layout vaadin-horizontal-layout > * {
+  flex-shrink: 0 !important;
+}
+
+.city-layout > * {
+  flex-shrink: 0;
+}
+
+.city-selector {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.city-selector::part(input-field) {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  border: none;
+}
+
+.location-btn {
+  border-radius: 50% !important;
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  max-width: 50px !important;
+  max-height: 50px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: white !important;
+  color: #0066ff !important;
+  border: 3px solid #0066ff !important;
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.3s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 100 !important;
+  overflow: visible !important;
+}
+
+.location-btn::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: white;
+  z-index: -1;
+}
+
+.location-btn:hover {
+  background: var(--accent-color) !important;
+  color: white !important;
+  transform: scale(1.15);
+  border-color: var(--accent-hover) !important;
+  box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4) !important;
+}
+
+.location-btn::part(icon) {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.location-btn vaadin-icon {
+  width: 24px !important;
+  height: 24px !important;
+  color: inherit !important;
+  display: block !important;
+}
+
+.search-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.search-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0 0 2rem 0;
+  color: #ffffff !important;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.5px;
+}
+
+/* Responsive Search */
+@media (max-width: 768px) {
+  .search-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .search-title {
+    font-size: 2rem;
+  }
+
+  .city-selector {
+    width: 100% !important;
+  }
+
+  .location-btn {
+    width: 45px !important;
+    height: 45px !important;
+    min-width: 45px !important;
+    min-height: 45px !important;
+    max-width: 45px !important;
+    max-height: 45px !important;
+  }
+
+  .location-btn vaadin-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+

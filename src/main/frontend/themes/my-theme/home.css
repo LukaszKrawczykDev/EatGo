@@ -1,0 +1,10 @@
+/* ===== Home View ===== */
+.home-view {
+  background-color: var(--bg-secondary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+

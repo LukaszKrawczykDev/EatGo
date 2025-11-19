@@ -1,0 +1,178 @@
+/* ===== Menu Dialog ===== */
+.menu-dialog {
+  border-radius: 20px;
+  z-index: 9999 !important;
+  width: 90vw !important;
+  max-width: 900px !important;
+}
+
+.menu-dialog::part(overlay) {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9998 !important;
+}
+
+.menu-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+}
+
+.menu-content vaadin-vertical-layout {
+  gap: 1.5rem;
+  padding: 0;
+}
+
+.menu-dialog::part(header) {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0;
+  z-index: 10000;
+}
+
+.menu-dialog::part(title) {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.menu-dialog::part(content) {
+  padding: 0;
+  background: var(--bg-secondary);
+}
+
+.menu-dialog::part(footer) {
+  background: var(--bg-primary);
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  border-radius: 0 0 20px 20px;
+}
+
+/* ===== Dish Card ===== */
+.dish-card {
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+  opacity: 0;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dish-card.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.dish-card:hover {
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.dish-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dish-name-category-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dish-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.dish-description {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.7;
+  min-height: 2.5rem;
+}
+
+.dish-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.dish-price {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  margin: 0;
+}
+
+.dish-category {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border-radius: 25px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border-color);
+}
+
+.add-to-cart-btn {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.add-to-cart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Location Dialog ===== */
+.location-dialog {
+  border-radius: 20px;
+  z-index: 9999 !important;
+}
+
+.location-dialog::part(overlay) {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9998 !important;
+}
+
+.location-dialog::part(content) {
+  background-color: var(--bg-primary) !important;
+  opacity: 1 !important;
+}
+
+.location-dialog::part(header) {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  opacity: 1 !important;
+}
+
+.location-dialog::part(footer) {
+  background-color: var(--bg-primary) !important;
+  opacity: 1 !important;
+}
+

@@ -10,6 +10,7 @@
 @import url('categories.css');
 @import url('restaurants.css');
 @import url('menu.css');
+@import url('auth.css');
 
 /* ===== Utility ===== */
 vaadin-text-field.search-input::part(input-field) {
