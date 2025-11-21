@@ -120,6 +120,15 @@
   margin-top: 1rem;
 }
 
+.menu-button-wrapper vaadin-vertical-layout {
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.details-btn {
+  margin-top: 0;
+}
+
 .view-menu-btn {
   border-radius: 10px;
   padding: 0.75rem 2rem;

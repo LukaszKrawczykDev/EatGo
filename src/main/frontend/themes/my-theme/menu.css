@@ -55,16 +55,61 @@
   background-color: var(--bg-primary);
   border: 2px solid var(--border-color);
   border-radius: 20px;
-  padding: 2rem;
+  overflow: hidden;
   margin-bottom: 1.5rem;
   transition: all 0.3s ease;
   opacity: 0;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
   width: 100%;
   box-sizing: border-box;
+}
+
+.dish-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.dish-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.dish-card:hover .dish-img {
+  transform: scale(1.05);
+}
+
+.dish-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  font-size: 3rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.dish-card-header {
+  padding: 1rem 1.5rem 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .dish-card.fade-in {
@@ -101,10 +146,10 @@
 
 .dish-description {
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin: 0;
-  line-height: 1.7;
-  min-height: 2.5rem;
+  line-height: 1.5;
+  padding: 0.5rem 1.5rem;
 }
 
 .dish-card-footer {
@@ -112,9 +157,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding-top: 0.75rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
   flex-wrap: wrap;
+  margin-top: auto;
 }
 
 .dish-price {
@@ -141,6 +187,14 @@
   font-weight: 600;
   transition: all 0.3s ease;
   white-space: nowrap;
+  background: var(--gradient-primary) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.add-to-cart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .add-to-cart-btn:hover {

@@ -4,18 +4,19 @@ spring:
     username: eatgo_user
     password: eatgo_pass
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
 
-  sql:
-    init:
-      mode: always
   profiles:
     active: dev
   flyway:
@@ -25,3 +26,17 @@ spring:
     password: eatgo_pass
     locations: classpath:db/migration
     database-type: postgres
+    baseline-on-migrate: true
+    out-of-order: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.flywaydb: INFO
+    org.springframework.jdbc: INFO
+    org.springframework.boot: INFO
+    org.hibernate: WARN
+    pollub.eatgo: INFO
+    root: INFO

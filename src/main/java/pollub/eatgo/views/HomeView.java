@@ -17,6 +17,7 @@ import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 import pollub.eatgo.service.AuthenticationService;
 import pollub.eatgo.service.RestaurantService;
+import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 import pollub.eatgo.views.components.FooterComponent;
 
@@ -29,6 +30,8 @@ public class HomeView extends VerticalLayout {
 
     private final RestaurantService restaurantService;
     private final AuthenticationService authService;
+    private final TokenValidationService tokenValidationService;
+    private HeaderComponent headerComponent;
     private TextField searchField;
     private ComboBox<String> cityComboBox;
     private List<RestaurantSummaryDto> allRestaurants;
@@ -48,22 +51,40 @@ public class HomeView extends VerticalLayout {
         "ITALIAN", "🍝"
     );
 
-    public HomeView(RestaurantService restaurantService, AuthenticationService authService) {
+    public HomeView(RestaurantService restaurantService, AuthenticationService authService, TokenValidationService tokenValidationService) {
         this.restaurantService = restaurantService;
         this.authService = authService;
+        this.tokenValidationService = tokenValidationService;
+        
+        // Sprawdź rolę użytkownika i przekieruj jeśli potrzeba
+        checkUserRoleAndRedirect();
         
         setSizeFull();
         setSpacing(false);
         setPadding(false);
         addClassName("home-view");
         
-        add(new HeaderComponent(authService));
+        headerComponent = new HeaderComponent(authService, tokenValidationService);
+        add(headerComponent);
         add(createSearchSection());
         add(createCategoriesSection());
         add(createRestaurantsSection());
         add(new FooterComponent());
         
         loadRestaurants();
+    }
+    
+    private void checkUserRoleAndRedirect() {
+        getElement().executeJs(
+            "const role = localStorage.getItem('eatgo-role'); " +
+            "if (role) { " +
+            "  if (role === 'RESTAURANT_ADMIN') { " +
+            "    window.location.href = '/restaurant'; " +
+            "  } else if (role === 'COURIER') { " +
+            "    window.location.href = '/courier'; " +
+            "  } " +
+            "}"
+        );
     }
 
     private Div createSearchSection() {
@@ -87,6 +108,11 @@ public class HomeView extends VerticalLayout {
         cityLayout.setAlignItems(Alignment.CENTER);
         cityLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         
+        // Kontener dla wyświetlania miasta (dla zalogowanych) lub wyboru (dla niezalogowanych)
+        Div cityDisplayContainer = new Div();
+        cityDisplayContainer.addClassName("city-display-container");
+        
+        // Domyślnie pokaż wybór miasta
         cityComboBox = new ComboBox<>("Wybierz miasto");
         cityComboBox.setItems(AVAILABLE_CITIES);
         cityComboBox.setPlaceholder("Wszystkie miasta");
@@ -95,8 +121,33 @@ public class HomeView extends VerticalLayout {
         cityComboBox.addClassName("city-selector");
         cityComboBox.addValueChangeListener(e -> {
             selectedCity = e.getValue();
+            // Zapisz wybrane miasto w localStorage
+            if (selectedCity != null) {
+                getElement().executeJs("localStorage.setItem('eatgo-city', $0);", selectedCity);
+            } else {
+                getElement().executeJs("localStorage.removeItem('eatgo-city');");
+            }
             filterRestaurants();
         });
+        
+        // Wyświetlanie zapisanego miasta dla zalogowanych użytkowników
+        Span savedCityDisplay = new Span();
+        savedCityDisplay.addClassName("saved-city-display");
+        savedCityDisplay.setVisible(false);
+        
+        Button changeCityBtn = new Button("Zmień miasto");
+        changeCityBtn.addClassName("change-city-btn");
+        changeCityBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        changeCityBtn.setVisible(false);
+        changeCityBtn.addClickListener(e -> {
+            // Przełącz na wybór miasta
+            savedCityDisplay.setVisible(false);
+            changeCityBtn.setVisible(false);
+            cityComboBox.setVisible(true);
+            cityComboBox.focus();
+        });
+        
+        cityDisplayContainer.add(cityComboBox, savedCityDisplay, changeCityBtn);
         
         Button locationBtn = new Button(VaadinIcon.LOCATION_ARROW.create());
         locationBtn.addClassName("location-btn");
@@ -107,7 +158,30 @@ public class HomeView extends VerticalLayout {
         locationBtn.getStyle().set("align-items", "center");
         locationBtn.getStyle().set("justify-content", "center");
         
-        cityLayout.add(cityComboBox, locationBtn);
+        // Sprawdź czy użytkownik jest zalogowany i zaktualizuj widok
+        getElement().executeJs(
+            "const isLoggedIn = localStorage.getItem('eatgo-token') !== null; " +
+            "const savedCity = localStorage.getItem('eatgo-city'); " +
+            "if (isLoggedIn && savedCity) { " +
+            "  const display = document.querySelector('.saved-city-display'); " +
+            "  const changeBtn = document.querySelector('.change-city-btn'); " +
+            "  const comboBox = document.querySelector('.city-selector'); " +
+            "  if (display && changeBtn && comboBox) { " +
+            "    display.textContent = savedCity; " +
+            "    display.style.display = 'block'; " +
+            "    changeBtn.style.display = 'inline-flex'; " +
+            "    comboBox.style.display = 'none'; " +
+            "  } " +
+            "} else if (savedCity) { " +
+            "  const comboBox = document.querySelector('.city-selector'); " +
+            "  if (comboBox) { " +
+            "    comboBox.value = savedCity; " +
+            "    comboBox.dispatchEvent(new Event('change')); " +
+            "  } " +
+            "}"
+        );
+        
+        cityLayout.add(cityDisplayContainer, locationBtn);
         citySelectorWrapper.add(cityLayout);
         
         // Search wrapper
@@ -324,14 +398,32 @@ public class HomeView extends VerticalLayout {
         Span deliveryInfo = new Span("💰 " + String.format("%.2f zł", restaurant.deliveryPrice()) + " dostawa");
         deliveryInfo.addClassName("delivery-price");
         
-        // Menu button - wyśrodkowany pod ceną dostawy
+        // Przyciski - wyśrodkowane pod ceną dostawy (jeden pod drugim)
         Div buttonWrapper = new Div();
         buttonWrapper.addClassName("menu-button-wrapper");
+        
+        VerticalLayout buttonsLayout = new VerticalLayout();
+        buttonsLayout.setSpacing(true);
+        buttonsLayout.setPadding(false);
+        buttonsLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+        buttonsLayout.setWidthFull();
+        
         Button viewMenuBtn = new Button("Zobacz menu", VaadinIcon.MENU.create());
         viewMenuBtn.addClassName("view-menu-btn");
         viewMenuBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        viewMenuBtn.setWidthFull();
         viewMenuBtn.addClickListener(e -> showMenuDialog(restaurant));
-        buttonWrapper.add(viewMenuBtn);
+        
+        Button detailsBtn = new Button("Szczegóły", VaadinIcon.INFO.create());
+        detailsBtn.addClassName("details-btn");
+        detailsBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        detailsBtn.setWidthFull();
+        detailsBtn.addClickListener(e -> {
+            getUI().ifPresent(ui -> ui.navigate("restaurant-view/" + restaurant.id()));
+        });
+        
+        buttonsLayout.add(viewMenuBtn, detailsBtn);
+        buttonWrapper.add(buttonsLayout);
         
         content.add(name, address, deliveryInfo, buttonWrapper);
         card.add(imageDiv, content);
@@ -366,19 +458,41 @@ public class HomeView extends VerticalLayout {
         
         try {
             List<DishDto> menu = restaurantService.getMenu(restaurant.id());
+            System.out.println("HomeView.showMenuDialog: Loaded " + menu.size() + " dishes for restaurant " + restaurant.id());
             
             if (menu.isEmpty()) {
                 Paragraph emptyMsg = new Paragraph("Brak dostępnych dań w menu.");
                 emptyMsg.addClassName(LumoUtility.TextAlignment.CENTER);
                 content.add(emptyMsg);
             } else {
-                for (DishDto dish : menu) {
-                    if (dish.available()) {
+                // Grupuj dania po kategoriach
+                Map<String, List<DishDto>> dishesByCategory = menu.stream()
+                        .filter(DishDto::available)
+                        .collect(Collectors.groupingBy(
+                                dish -> dish.category() != null ? dish.category() : "Inne"
+                        ));
+                
+                System.out.println("HomeView.showMenuDialog: Grouped into " + dishesByCategory.size() + " categories");
+                
+                for (Map.Entry<String, List<DishDto>> entry : dishesByCategory.entrySet()) {
+                    String category = entry.getKey();
+                    List<DishDto> dishes = entry.getValue();
+                    
+                    System.out.println("HomeView.showMenuDialog: Category '" + category + "' has " + dishes.size() + " dishes");
+                    
+                    H3 categoryTitle = new H3(category);
+                    categoryTitle.addClassName("menu-category-title");
+                    content.add(categoryTitle);
+                    
+                    for (DishDto dish : dishes) {
+                        System.out.println("HomeView.showMenuDialog: Adding dish " + dish.name() + " (imageUrl: " + dish.imageUrl() + ")");
                         content.add(createDishCard(dish));
                     }
                 }
             }
         } catch (Exception e) {
+            System.err.println("HomeView.showMenuDialog: Error loading menu: " + e.getMessage());
+            e.printStackTrace();
             Notification.show("Błąd podczas ładowania menu: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
         }
         
@@ -386,7 +500,13 @@ public class HomeView extends VerticalLayout {
         closeBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         closeBtn.addClassName("close-btn");
         
-        dialog.getFooter().add(closeBtn);
+        Button detailsBtn = new Button("Zobacz szczegóły", e -> {
+            dialog.close();
+            getUI().ifPresent(ui -> ui.navigate("restaurant-view/" + restaurant.id()));
+        });
+        detailsBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        dialog.getFooter().add(detailsBtn, closeBtn);
         dialog.add(content);
         dialog.open();
     }
@@ -395,6 +515,8 @@ public class HomeView extends VerticalLayout {
         Div card = new Div();
         card.addClassName("dish-card");
         card.addClassName("fade-in");
+        
+        // W modalu menu NIE wyświetlamy zdjęć - tylko w widoku szczegółów restauracji
         
         // Header z nazwą i kategorią
         Div cardHeader = new Div();
@@ -431,7 +553,16 @@ public class HomeView extends VerticalLayout {
         addToCartBtn.addClassName("add-to-cart-btn");
         addToCartBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         addToCartBtn.addClickListener(e -> {
-            Notification.show("Dodano " + dish.name() + " do koszyka", 2000, Notification.Position.TOP_CENTER);
+            // Znajdź restaurację dla tego dania
+            RestaurantSummaryDto dishRestaurant = allRestaurants.stream()
+                    .filter(r -> r.id().equals(dish.restaurantId()))
+                    .findFirst()
+                    .orElse(null);
+            if (dishRestaurant != null) {
+                addDishToCart(dish, dishRestaurant);
+            } else {
+                Notification.show("Błąd: nie znaleziono restauracji", 3000, Notification.Position.TOP_CENTER);
+            }
         });
         
         cardFooter.add(price, addToCartBtn);
@@ -518,5 +649,62 @@ public class HomeView extends VerticalLayout {
                 delay += 50;
             }
         }
+    }
+    
+    private void addDishToCart(DishDto dish, RestaurantSummaryDto restaurant) {
+        if (restaurant == null) {
+            Notification.show("Błąd: nie znaleziono restauracji", 3000, Notification.Position.TOP_CENTER);
+            return;
+        }
+        
+        System.out.println("HomeView.addDishToCart: Adding dish " + dish.name() + " (ID: " + dish.id() + ") to restaurant " + restaurant.id());
+        
+        // Konwertuj Long na String/Number dla JavaScript
+        String restaurantIdStr = String.valueOf(restaurant.id());
+        String dishIdStr = String.valueOf(dish.id());
+        String dishName = dish.name();
+        String dishPriceStr = String.valueOf(dish.price());
+        
+        getElement().executeJs(
+            "const carts = JSON.parse(localStorage.getItem('eatgo-carts') || '{}'); " +
+            "const restaurantId = $0; " +
+            "const dishId = Number($1); " +
+            "const dishName = $2; " +
+            "const dishPrice = Number($3); " +
+            "" +
+            "console.log('Adding to cart - restaurantId:', restaurantId, 'dishId:', dishId, 'name:', dishName, 'price:', dishPrice); " +
+            "" +
+            "if (!carts[restaurantId]) { " +
+            "  carts[restaurantId] = { items: [] }; " +
+            "  console.log('Created new cart for restaurant:', restaurantId); " +
+            "} " +
+            "" +
+            "const existingItem = carts[restaurantId].items.find(item => item.dishId === dishId); " +
+            "if (existingItem) { " +
+            "  existingItem.quantity += 1; " +
+            "  console.log('Increased quantity for existing item:', existingItem); " +
+            "} else { " +
+            "  const newItem = { " +
+            "    dishId: dishId, " +
+            "    name: dishName, " +
+            "    price: dishPrice, " +
+            "    quantity: 1 " +
+            "  }; " +
+            "  carts[restaurantId].items.push(newItem); " +
+            "  console.log('Added new item to cart:', newItem); " +
+            "} " +
+            "" +
+            "localStorage.setItem('eatgo-carts', JSON.stringify(carts)); " +
+            "console.log('Cart saved to localStorage:', carts); " +
+            "window.dispatchEvent(new Event('eatgo-cart-changed')); " +
+            "return true;",
+            restaurantIdStr, dishIdStr, dishName, dishPriceStr
+        ).then(Boolean.class, success -> {
+            if (success != null && success) {
+                Notification.show("Dodano " + dish.name() + " do koszyka", 2000, Notification.Position.TOP_CENTER);
+            } else {
+                Notification.show("Błąd podczas dodawania do koszyka", 3000, Notification.Position.TOP_CENTER);
+            }
+        });
     }
 }

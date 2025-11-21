@@ -104,7 +104,8 @@
   align-items: center;
 }
 
-.cart-button {
+.cart-button,
+.notifications-button {
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -118,10 +119,12 @@
   transition: all 0.3s ease;
 }
 
-.cart-button:hover {
-  background-color: var(--accent-color);
+.cart-button:hover,
+.notifications-button:hover {
+  background: var(--gradient-primary);
   color: white;
   transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 .cart-badge {
@@ -155,8 +158,14 @@
 }
 
 .user-menu vaadin-menu-bar-button:hover {
-  background-color: var(--accent-color);
+  background: var(--gradient-primary);
   color: white;
+  box-shadow: var(--shadow-md);
+}
+
+/* Menu rozwija się po najechaniu (hover) */
+.user-menu vaadin-menu-bar {
+  --vaadin-menu-bar-open-on-hover: true;
 }
 
 .login-buttons-container {

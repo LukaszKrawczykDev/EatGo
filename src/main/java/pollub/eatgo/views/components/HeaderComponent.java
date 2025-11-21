@@ -13,18 +13,21 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.router.RouterLink;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.TokenValidationService;
 
 public class HeaderComponent extends Div {
     
     private Button themeToggle;
     private boolean isDarkMode = false;
     private final AuthenticationService authService;
+    private final TokenValidationService tokenValidationService;
     private HorizontalLayout headerActions;
     private Div userMenuContainer;
     private Div loginButtonsContainer;
     
-    public HeaderComponent(AuthenticationService authService) {
+    public HeaderComponent(AuthenticationService authService, TokenValidationService tokenValidationService) {
         this.authService = authService;
+        this.tokenValidationService = tokenValidationService;
         addClassName("home-header");
         setWidthFull();
         
@@ -66,6 +69,12 @@ public class HeaderComponent extends Div {
         headerContent.add(logoContainer, headerActions);
         add(headerContent);
         
+        // Załaduj API interceptor (automatyczne dodawanie tokena do requestów)
+        loadApiInterceptor();
+        
+        // Sprawdź ważność tokena i wyczyść jeśli nieprawidłowy
+        validateAndCleanToken();
+        
         // Sprawdź stan logowania i zaktualizuj UI
         checkLoginStatus();
         
@@ -73,29 +82,121 @@ public class HeaderComponent extends Div {
         setupStorageListener();
     }
     
+    /**
+     * Ładuje skrypt API interceptor, który automatycznie dodaje token do requestów API.
+     */
+    private void loadApiInterceptor() {
+        getUI().ifPresent(ui -> {
+            ui.getPage().executeJs(
+                "if (!window.eatgoApiInterceptorLoaded) { " +
+                "  const script = document.createElement('script'); " +
+                "  script.src = '/themes/my-theme/api-interceptor.js'; " +
+                "  script.onload = function() { " +
+                "    console.log('[HeaderComponent] API Interceptor loaded'); " +
+                "    window.eatgoApiInterceptorLoaded = true; " +
+                "  }; " +
+                "  script.onerror = function() { " +
+                "    console.error('[HeaderComponent] Failed to load API Interceptor'); " +
+                "  }; " +
+                "  document.head.appendChild(script); " +
+                "}"
+            );
+        });
+    }
+    
+    /**
+     * Sprawdza ważność tokena w localStorage i usuwa go jeśli jest nieprawidłowy.
+     */
+    private void validateAndCleanToken() {
+        getElement().executeJs(
+            "const token = localStorage.getItem('eatgo-token'); " +
+            "if (token && token !== 'null' && token !== '') { " +
+            "  // Sprawdź czy token wygląda na ważny (podstawowa walidacja) " +
+            "  try { " +
+            "    const parts = token.split('.'); " +
+            "    if (parts.length !== 3) { " +
+            "      console.warn('[TokenValidation] Invalid token format, clearing...'); " +
+            "      localStorage.removeItem('eatgo-token'); " +
+            "      localStorage.removeItem('eatgo-userId'); " +
+            "      localStorage.removeItem('eatgo-role'); " +
+            "      return; " +
+            "    } " +
+            "    // Dekoduj payload (base64) " +
+            "    const payload = JSON.parse(atob(parts[1])); " +
+            "    const exp = payload.exp * 1000; // Konwersja na milisekundy " +
+            "    const now = Date.now(); " +
+            "    if (exp < now) { " +
+            "      console.warn('[TokenValidation] Token expired, clearing...'); " +
+            "      localStorage.removeItem('eatgo-token'); " +
+            "      localStorage.removeItem('eatgo-userId'); " +
+            "      localStorage.removeItem('eatgo-role'); " +
+            "      $0.$server.onTokenExpired(); " +
+            "    } else { " +
+            "      console.log('[TokenValidation] Token is valid'); " +
+            "    } " +
+            "  } catch (e) { " +
+            "    console.error('[TokenValidation] Error validating token:', e); " +
+            "    localStorage.removeItem('eatgo-token'); " +
+            "    localStorage.removeItem('eatgo-userId'); " +
+            "    localStorage.removeItem('eatgo-role'); " +
+            "  } " +
+            "}",
+            getElement()
+        );
+    }
+    
+    /**
+     * Wywoływane gdy token wygasł - aktualizuje UI.
+     */
+    @com.vaadin.flow.component.ClientCallable
+    public void onTokenExpired() {
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                System.out.println("[TokenValidation] Token expired, updating UI");
+                userMenuContainer.setVisible(false);
+                loginButtonsContainer.setVisible(true);
+                Notification.show("Sesja wygasła. Zaloguj się ponownie.", 3000, Notification.Position.TOP_CENTER);
+            });
+        });
+    }
+    
     private void setupStorageListener() {
         getElement().executeJs(
-            "window.addEventListener('storage', function(e) { " +
-            "  if (e.key === 'eatgo-token') { " +
-            "    console.log('Storage event detected for eatgo-token'); " +
-            "    $0.$server.onLoginStatusChanged(); " +
-            "  } " +
-            "}); " +
-            "// Nasłuchuj również custom event dla zmian w localStorage w tej samej karcie " +
-            "window.addEventListener('eatgo-login-changed', function() { " +
-            "  console.log('eatgo-login-changed event received'); " +
-            "  $0.$server.onLoginStatusChanged(); " +
-            "}); " +
-            "console.log('Storage listener setup complete');",
+            "(function(element) { " +
+            "  window.addEventListener('storage', function(e) { " +
+            "    if (e.key === 'eatgo-token') { " +
+            "      console.log('Storage event detected for eatgo-token'); " +
+            "      element.$server.onLoginStatusChanged(); " +
+            "    } " +
+            "  }); " +
+            "  // Nasłuchuj również custom event dla zmian w localStorage w tej samej karcie " +
+            "  window.addEventListener('eatgo-login-changed', function() { " +
+            "    console.log('eatgo-login-changed event received'); " +
+            "    element.$server.onLoginStatusChanged(); " +
+            "  }); " +
+            "  console.log('Storage listener setup complete'); " +
+            "})($0);",
             getElement()
         );
     }
     
     @com.vaadin.flow.component.ClientCallable
-    private void onLoginStatusChanged() {
+    public void onLoginStatusChanged() {
         // Użyj UI.access, aby upewnić się, że aktualizacja jest w odpowiednim wątku
         getUI().ifPresent(ui -> {
             ui.access(() -> {
+                System.out.println("onLoginStatusChanged called - checking login status");
+                // Wywołaj checkLoginStatus w odpowiednim wątku UI
+                checkLoginStatus();
+            });
+        });
+    }
+    
+    // Publiczna metoda do wywołania bezpośrednio z Java (nie przez JavaScript)
+    public void refreshLoginStatus() {
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                System.out.println("refreshLoginStatus called - checking login status");
                 checkLoginStatus();
             });
         });
@@ -108,18 +209,7 @@ public class HeaderComponent extends Div {
         loginBtn.addClassName("login-btn");
         loginBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         loginBtn.addClickListener(e -> {
-            LoginDialog loginDialog = new LoginDialog(authService);
-            RegisterDialog registerDialog = new RegisterDialog(authService);
-            
-            loginDialog.setOnRegisterClick(() -> {
-                loginDialog.close();
-                registerDialog.open();
-            });
-            registerDialog.setOnLoginClick(() -> {
-                registerDialog.close();
-                loginDialog.open();
-            });
-            
+            LoginDialog loginDialog = new LoginDialog(authService, this);
             loginDialog.open();
         });
         
@@ -127,18 +217,7 @@ public class HeaderComponent extends Div {
         signUpBtn.addClassName("signup-btn");
         signUpBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         signUpBtn.addClickListener(e -> {
-            LoginDialog loginDialog = new LoginDialog(authService);
-            RegisterDialog registerDialog = new RegisterDialog(authService);
-            
-            loginDialog.setOnRegisterClick(() -> {
-                loginDialog.close();
-                registerDialog.open();
-            });
-            registerDialog.setOnLoginClick(() -> {
-                registerDialog.close();
-                loginDialog.open();
-            });
-            
+            RegisterDialog registerDialog = new RegisterDialog(authService, this);
             registerDialog.open();
         });
         
@@ -163,55 +242,90 @@ public class HeaderComponent extends Div {
     private void onLoginStatusReceived(boolean isLoggedIn, String userId, String role) {
         getUI().ifPresent(ui -> {
             ui.access(() -> {
+                System.out.println("onLoginStatusReceived called - isLoggedIn: " + isLoggedIn + ", userId: " + userId + ", role: " + role);
                 if (isLoggedIn) {
                     createUserMenu(userId, role);
                     userMenuContainer.setVisible(true);
                     loginButtonsContainer.setVisible(false);
+                    System.out.println("User menu created and shown");
                 } else {
                     userMenuContainer.setVisible(false);
                     loginButtonsContainer.setVisible(true);
+                    System.out.println("Login buttons shown");
+                }
+            });
+        });
+    }
+    
+    // Publiczna metoda do bezpośredniej aktualizacji po zalogowaniu (bez odczytywania z localStorage)
+    public void updateAfterLogin(String userId, String role) {
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                System.out.println("updateAfterLogin called - userId: " + userId + ", role: " + role);
+                createUserMenu(userId, role);
+                userMenuContainer.setVisible(true);
+                loginButtonsContainer.setVisible(false);
+            });
+        });
+    }
+    
+    // Metoda wywoływana przez JavaScript po zapisaniu tokena
+    @com.vaadin.flow.component.ClientCallable
+    public void onTokenSaved(String userId, String role) {
+        System.out.println("onTokenSaved called - userId: '" + userId + "', role: '" + role + "'");
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                System.out.println("onTokenSaved - inside UI.access - userId: '" + userId + "', role: '" + role + "'");
+                System.out.println("Before update - userMenuContainer visible: " + userMenuContainer.isVisible() + 
+                                 ", loginButtonsContainer visible: " + loginButtonsContainer.isVisible());
+                
+                if (userId != null && !userId.isEmpty() && role != null && !role.isEmpty()) {
+                    System.out.println("Creating user menu...");
+                    createUserMenu(userId, role);
+                    System.out.println("User menu created, setting visibility...");
+                    
+                    // Ustaw widoczność
+                    userMenuContainer.setVisible(true);
+                    loginButtonsContainer.setVisible(false);
+                    
+                    // Wymuś odświeżenie
+                    userMenuContainer.getElement().callJsFunction("requestUpdate");
+                    loginButtonsContainer.getElement().callJsFunction("requestUpdate");
+                    
+                    System.out.println("After update - userMenuContainer visible: " + userMenuContainer.isVisible() + 
+                                     ", loginButtonsContainer visible: " + loginButtonsContainer.isVisible());
+                    System.out.println("userMenuContainer children: " + userMenuContainer.getChildren().count());
+                } else {
+                    System.out.println("ERROR: Invalid userId or role - userId: '" + userId + "', role: '" + role + "'");
                 }
             });
         });
     }
     
     private void createUserMenu(String userId, String role) {
+        System.out.println("createUserMenu called - userId: " + userId + ", role: " + role);
+        
+        // Usuń wszystkie istniejące elementy
         userMenuContainer.removeAll();
+        System.out.println("userMenuContainer cleared");
         
-        MenuBar userMenu = new MenuBar();
-        userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
-        userMenu.addClassName("user-menu");
-        
-        // Dodaj menu items
-        var profileItem = userMenu.addItem("Profil", e -> {
-            Notification.show("Profil - w budowie", 2000, Notification.Position.TOP_CENTER);
-        });
-        profileItem.addComponentAsFirst(VaadinIcon.USER.create());
-        
-        var ordersItem = userMenu.addItem("Zamówienia", e -> {
-            Notification.show("Zamówienia - w budowie", 2000, Notification.Position.TOP_CENTER);
-        });
-        ordersItem.addComponentAsFirst(VaadinIcon.LIST.create());
-        
-        var notificationsItem = userMenu.addItem("Powiadomienia", e -> {
+        // Dodaj przycisk powiadomień (tylko ikona, bez tekstu)
+        Button notificationsButton = new Button(VaadinIcon.BELL.create());
+        notificationsButton.addClassName("notifications-button");
+        notificationsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        notificationsButton.setTooltipText("Powiadomienia");
+        notificationsButton.addClickListener(e -> {
             Notification.show("Powiadomienia - w budowie", 2000, Notification.Position.TOP_CENTER);
         });
-        notificationsItem.addComponentAsFirst(VaadinIcon.BELL.create());
-        
-        var settingsItem = userMenu.addItem("Ustawienia", e -> {
-            Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
-        });
-        settingsItem.addComponentAsFirst(VaadinIcon.COG.create());
-        
-        var logoutItem = userMenu.addItem("Wyloguj się", e -> handleLogout());
-        logoutItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
         
         // Dodaj przycisk koszyków (wiele koszyków - jeden per restauracja)
         Button cartsButton = new Button(VaadinIcon.CART.create());
         cartsButton.addClassName("cart-button");
         cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
         cartsButton.setTooltipText("Koszyki");
-        cartsButton.addClickListener(e -> showCartsDialog());
+        cartsButton.addClickListener(e -> {
+            getUI().ifPresent(ui -> ui.navigate("cart"));
+        });
         
         // Dodaj badge z liczbą aktywnych koszyków
         Span cartsBadge = new Span("0");
@@ -222,7 +336,43 @@ public class HeaderComponent extends Div {
         cartContainer.addClassName("cart-container");
         cartContainer.add(cartsButton, cartsBadge);
         
-        userMenuContainer.add(cartContainer, userMenu);
+        // MenuBar z rozwijanym menu "Profil"
+        MenuBar userMenu = new MenuBar();
+        userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
+        userMenu.addClassName("user-menu");
+        
+        // Włącz otwieranie menu po najechaniu (hover)
+        userMenu.getElement().setProperty("openOnHover", true);
+        
+        // Główny item "Profil" z ikoną i tekstem
+        var profileItem = userMenu.addItem("Profil", e -> {
+            // Kliknięcie na główny item - nie robi nic, tylko rozwija menu
+        });
+        profileItem.addComponentAsFirst(VaadinIcon.USER.create());
+        
+        // Submenu dla "Profil" - wyświetla się po najechaniu
+        var profileSubMenu = profileItem.getSubMenu();
+        
+        var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
+            Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
+        });
+        settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
+        
+        var ordersSubItem = profileSubMenu.addItem("Zamówienia", e -> {
+            Notification.show("Zamówienia - w budowie", 2000, Notification.Position.TOP_CENTER);
+        });
+        ordersSubItem.addComponentAsFirst(VaadinIcon.LIST.create());
+        
+        var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
+        logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
+        
+        // Dodaj elementy do kontenera w odpowiedniej kolejności
+        userMenuContainer.add(notificationsButton, cartContainer, userMenu);
+        System.out.println("Elements added to userMenuContainer - children count: " + userMenuContainer.getChildren().count());
+        
+        // Wymuś odświeżenie UI
+        userMenuContainer.getElement().callJsFunction("requestUpdate");
+        System.out.println("createUserMenu completed");
     }
     
     private void updateCartsBadge(Span badge) {

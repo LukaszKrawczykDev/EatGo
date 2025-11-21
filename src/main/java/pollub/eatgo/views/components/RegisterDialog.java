@@ -23,8 +23,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class RegisterDialog extends Dialog {
-    
+
     private final AuthenticationService authService;
+    private final HeaderComponent headerComponent;
     private EmailField emailField;
     private PasswordField passwordField;
     private PasswordField confirmPasswordField;
@@ -44,8 +45,9 @@ public class RegisterDialog extends Dialog {
     // Wymagania hasła
     private static final int MIN_PASSWORD_LENGTH = 8;
     
-    public RegisterDialog(AuthenticationService authService) {
+    public RegisterDialog(AuthenticationService authService, HeaderComponent headerComponent) {
         this.authService = authService;
+        this.headerComponent = headerComponent;
         
         addClassName("auth-dialog");
         setHeaderTitle("Zarejestruj się");
@@ -155,12 +157,11 @@ public class RegisterDialog extends Dialog {
         Button loginBtn = new Button("Zaloguj się");
         loginBtn.addClassName("auth-link");
         loginBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        loginBtn.addClickListener(e -> {
-            close();
-            if (onLoginCallback != null) {
-                onLoginCallback.run();
-            }
-        });
+               loginBtn.addClickListener(e -> {
+                   close();
+                   LoginDialog loginDialog = new LoginDialog(authService, headerComponent);
+                   loginDialog.open();
+               });
         loginLink.add(loginBtn);
         
         formLayout.add(emailField, passwordField, passwordStrengthIndicator, passwordRequirements, 
@@ -432,23 +433,43 @@ public class RegisterDialog extends Dialog {
             registerButton.setText("Zarejestruj się");
             
             if (result.isSuccess()) {
-                // Zapisz token w localStorage
-                saveTokenToLocalStorage(result.getToken(), result.getUserId(), result.getRole());
+                String token = result.getToken();
+                String userIdStr = result.getUserId() != null ? result.getUserId().toString() : "";
+                String roleStr = result.getRole() != null ? result.getRole() : "";
                 
-                close();
+                System.out.println("Registration successful - token: " + (token != null ? "present" : "null") + 
+                                   ", userId: " + userIdStr + ", role: " + roleStr);
                 
-                // Wyślij event natychmiast po zamknięciu dialogu
-                // Użyj setTimeout, aby dać czas na zamknięcie dialogu
+                // Zapisz token w localStorage używając ui.getPage().executeJs() dla lepszego kontekstu
                 getUI().ifPresent(ui -> {
-                    ui.getPage().executeJs(
-                        "setTimeout(function() { " +
-                        "  console.log('Dispatching eatgo-login-changed event'); " +
-                        "  window.dispatchEvent(new CustomEvent('eatgo-login-changed')); " +
-                        "}, 200);"
-                    );
+                    ui.access(() -> {
+                        ui.getPage().executeJs(
+                            "console.log('Saving token to localStorage...'); " +
+                            "localStorage.setItem('eatgo-token', $0); " +
+                            "localStorage.setItem('eatgo-userId', $1); " +
+                            "localStorage.setItem('eatgo-role', $2); " +
+                            "console.log('Token saved! eatgo-token:', localStorage.getItem('eatgo-token')); " +
+                            "console.log('UserId saved! eatgo-userId:', localStorage.getItem('eatgo-userId')); " +
+                            "console.log('Role saved! eatgo-role:', localStorage.getItem('eatgo-role')); " +
+                            "// Wywołaj callback po zapisaniu " +
+                            "$3.$server.onTokenSaved($1, $2); " +
+                            "// Przekieruj na odpowiednią stronę w zależności od roli i przeładuj " +
+                            "setTimeout(function() { " +
+                            "  if ($2 === 'RESTAURANT_ADMIN') { " +
+                            "    window.location.href = '/restaurant'; " +
+                            "  } else if ($2 === 'COURIER') { " +
+                            "    window.location.href = '/courier'; " +
+                            "  } else { " +
+                            "    window.location.reload(); " +
+                            "  } " +
+                            "}, 500);",
+                            token != null ? token : "", userIdStr, roleStr, headerComponent.getElement()
+                        );
+                    });
                 });
                 
                 Notification.show("Rejestracja zakończona pomyślnie!", 2000, Notification.Position.TOP_CENTER);
+                close();
             } else {
                 Notification.show(result.getErrorMessage(), 4000, Notification.Position.TOP_CENTER);
             }

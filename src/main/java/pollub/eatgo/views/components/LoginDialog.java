@@ -15,13 +15,15 @@ import pollub.eatgo.service.AuthenticationService;
 public class LoginDialog extends Dialog {
     
     private final AuthenticationService authService;
+    private final HeaderComponent headerComponent;
     private EmailField emailField;
     private PasswordField passwordField;
     private Button loginButton;
     private Runnable onRegisterCallback;
     
-    public LoginDialog(AuthenticationService authService) {
+    public LoginDialog(AuthenticationService authService, HeaderComponent headerComponent) {
         this.authService = authService;
+        this.headerComponent = headerComponent;
         
         addClassName("auth-dialog");
         setHeaderTitle("Zaloguj się");
@@ -59,9 +61,8 @@ public class LoginDialog extends Dialog {
         registerBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         registerBtn.addClickListener(e -> {
             close();
-            if (onRegisterCallback != null) {
-                onRegisterCallback.run();
-            }
+            RegisterDialog registerDialog = new RegisterDialog(authService, headerComponent);
+            registerDialog.open();
         });
         registerLink.add(registerBtn);
         
@@ -102,23 +103,43 @@ public class LoginDialog extends Dialog {
             loginButton.setText("Zaloguj się");
             
             if (result.isSuccess()) {
-                // Zapisz token w localStorage
-                saveTokenToLocalStorage(result.getToken(), result.getUserId(), result.getRole());
+                String token = result.getToken();
+                String userId = result.getUserId() != null ? result.getUserId().toString() : "";
+                String role = result.getRole() != null ? result.getRole() : "";
                 
-                close();
+                System.out.println("Login successful - token: " + (token != null ? "present" : "null") + 
+                                   ", userId: " + userId + ", role: " + role);
                 
-                // Wyślij event natychmiast po zamknięciu dialogu
-                // Użyj setTimeout, aby dać czas na zamknięcie dialogu
+                // Zapisz token w localStorage używając ui.getPage().executeJs() dla lepszego kontekstu
                 getUI().ifPresent(ui -> {
-                    ui.getPage().executeJs(
-                        "setTimeout(function() { " +
-                        "  console.log('Dispatching eatgo-login-changed event'); " +
-                        "  window.dispatchEvent(new CustomEvent('eatgo-login-changed')); " +
-                        "}, 200);"
-                    );
+                    ui.access(() -> {
+                        ui.getPage().executeJs(
+                            "console.log('Saving token to localStorage...'); " +
+                            "localStorage.setItem('eatgo-token', $0); " +
+                            "localStorage.setItem('eatgo-userId', $1); " +
+                            "localStorage.setItem('eatgo-role', $2); " +
+                            "console.log('Token saved! eatgo-token:', localStorage.getItem('eatgo-token')); " +
+                            "console.log('UserId saved! eatgo-userId:', localStorage.getItem('eatgo-userId')); " +
+                            "console.log('Role saved! eatgo-role:', localStorage.getItem('eatgo-role')); " +
+                            "// Wywołaj callback po zapisaniu " +
+                            "$3.$server.onTokenSaved($1, $2); " +
+                            "// Przekieruj na odpowiednią stronę w zależności od roli i przeładuj " +
+                            "setTimeout(function() { " +
+                            "  if ($2 === 'RESTAURANT_ADMIN') { " +
+                            "    window.location.href = '/restaurant'; " +
+                            "  } else if ($2 === 'COURIER') { " +
+                            "    window.location.href = '/courier'; " +
+                            "  } else { " +
+                            "    window.location.reload(); " +
+                            "  } " +
+                            "}, 500);",
+                            token != null ? token : "", userId, role, headerComponent.getElement()
+                        );
+                    });
                 });
                 
                 Notification.show("Zalogowano pomyślnie!", 2000, Notification.Position.TOP_CENTER);
+                close();
             } else {
                 Notification.show(result.getErrorMessage(), 4000, Notification.Position.TOP_CENTER);
             }
@@ -130,10 +151,12 @@ public class LoginDialog extends Dialog {
     }
     
     private void saveTokenToLocalStorage(String token, Long userId, String role) {
+        // Zapisz synchronicznie - executeJs jest asynchroniczne, ale localStorage.setItem jest synchroniczne
         getElement().executeJs(
             "localStorage.setItem('eatgo-token', $0); " +
             "localStorage.setItem('eatgo-userId', $1); " +
-            "localStorage.setItem('eatgo-role', $2);",
+            "localStorage.setItem('eatgo-role', $2); " +
+            "console.log('Token saved to localStorage');",
             token, userId != null ? userId.toString() : "", role != null ? role : ""
         );
     }

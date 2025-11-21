@@ -32,6 +32,8 @@ public class Dish {
 
     private String category; // PIZZA, BURGER, SUSHI, ASIAN, MEXICAN, ITALIAN, etc.
 
+    private String imageUrl; // URL do zdjęcia dania
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;

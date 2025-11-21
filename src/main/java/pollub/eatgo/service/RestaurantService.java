@@ -176,16 +176,33 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant not found"));
 
-        return dishRepository.findByRestaurantIdAndAvailableTrue(restaurant.getId()).stream()
-                .map(d -> new DishDto(
-                        d.getId(),
-                        d.getName(),
-                        d.getDescription(),
-                        d.getPrice(),
-                        d.isAvailable(),
-                        restaurant.getId(),
-                        d.getCategory()
-                ))
+        List<Dish> allDishes = dishRepository.findByRestaurantId(restaurant.getId());
+        System.out.println("RestaurantService.getMenu: Found " + allDishes.size() + " dishes for restaurant " + restaurantId);
+        
+        List<Dish> availableDishes = dishRepository.findByRestaurantIdAndAvailableTrue(restaurant.getId());
+        System.out.println("RestaurantService.getMenu: Found " + availableDishes.size() + " available dishes");
+        
+        if (availableDishes.isEmpty() && !allDishes.isEmpty()) {
+            System.out.println("RestaurantService.getMenu: WARNING - No available dishes, but " + allDishes.size() + " total dishes exist!");
+            System.out.println("RestaurantService.getMenu: All dishes availability: " + 
+                allDishes.stream().map(d -> d.getName() + "=" + d.isAvailable()).collect(java.util.stream.Collectors.joining(", ")));
+        }
+
+        return availableDishes.stream()
+                .map(d -> {
+                    DishDto dto = new DishDto(
+                            d.getId(),
+                            d.getName(),
+                            d.getDescription(),
+                            d.getPrice(),
+                            d.isAvailable(),
+                            restaurant.getId(),
+                            d.getCategory(),
+                            d.getImageUrl() != null ? d.getImageUrl() : ""
+                    );
+                    System.out.println("RestaurantService.getMenu: Mapped dish: " + dto.name() + " (category: " + dto.category() + ")");
+                    return dto;
+                })
                 .toList();
     }
 
@@ -251,7 +268,8 @@ public class RestaurantService {
                 dish.getPrice(),
                 dish.isAvailable(),
                 dish.getRestaurant() != null ? dish.getRestaurant().getId() : null,
-                dish.getCategory()
+                dish.getCategory(),
+                dish.getImageUrl() != null ? dish.getImageUrl() : ""
         );
     }
 
