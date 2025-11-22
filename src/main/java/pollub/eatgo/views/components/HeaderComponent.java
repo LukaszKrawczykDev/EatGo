@@ -288,10 +288,6 @@ public class HeaderComponent extends Div {
                     userMenuContainer.setVisible(true);
                     loginButtonsContainer.setVisible(false);
                     
-                    // Wymuś odświeżenie
-                    userMenuContainer.getElement().callJsFunction("requestUpdate");
-                    loginButtonsContainer.getElement().callJsFunction("requestUpdate");
-                    
                     System.out.println("After update - userMenuContainer visible: " + userMenuContainer.isVisible() + 
                                      ", loginButtonsContainer visible: " + loginButtonsContainer.isVisible());
                     System.out.println("userMenuContainer children: " + userMenuContainer.getChildren().count());
@@ -358,8 +354,13 @@ public class HeaderComponent extends Div {
         });
         settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
         
+        var addressesSubItem = profileSubMenu.addItem("Adresy", e -> {
+            getUI().ifPresent(ui -> ui.navigate("addresses"));
+        });
+        addressesSubItem.addComponentAsFirst(VaadinIcon.MAP_MARKER.create());
+        
         var ordersSubItem = profileSubMenu.addItem("Zamówienia", e -> {
-            Notification.show("Zamówienia - w budowie", 2000, Notification.Position.TOP_CENTER);
+            getUI().ifPresent(ui -> ui.navigate("orders"));
         });
         ordersSubItem.addComponentAsFirst(VaadinIcon.LIST.create());
         
@@ -371,7 +372,6 @@ public class HeaderComponent extends Div {
         System.out.println("Elements added to userMenuContainer - children count: " + userMenuContainer.getChildren().count());
         
         // Wymuś odświeżenie UI
-        userMenuContainer.getElement().callJsFunction("requestUpdate");
         System.out.println("createUserMenu completed");
     }
     

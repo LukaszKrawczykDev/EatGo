@@ -134,7 +134,8 @@ public class OrderService {
 						order.getAddress().getId(),
 						order.getAddress().getCity(),
 						order.getAddress().getStreet(),
-						order.getAddress().getPostalCode()
+						order.getAddress().getPostalCode(),
+						order.getAddress().getApartmentNumber()
 				)
 		);
 	}

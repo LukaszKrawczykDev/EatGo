@@ -26,6 +26,8 @@ public class Address {
     @NotBlank
     private String postalCode;
 
+    private String apartmentNumber;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @Setter
