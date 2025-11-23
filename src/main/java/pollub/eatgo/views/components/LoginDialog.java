@@ -122,19 +122,19 @@ public class LoginDialog extends Dialog {
                             "console.log('UserId saved! eatgo-userId:', localStorage.getItem('eatgo-userId')); " +
                             "console.log('Role saved! eatgo-role:', localStorage.getItem('eatgo-role')); " +
                             "// Wywołaj callback po zapisaniu " +
-                            "$3.$server.onTokenSaved($1, $2); " +
-                            "// Przekieruj na odpowiednią stronę w zależności od roli i przeładuj " +
-                            "setTimeout(function() { " +
-                            "  if ($2 === 'RESTAURANT_ADMIN') { " +
-                            "    window.location.href = '/restaurant'; " +
-                            "  } else if ($2 === 'COURIER') { " +
-                            "    window.location.href = '/courier'; " +
-                            "  } else { " +
-                            "    window.location.reload(); " +
-                            "  } " +
-                            "}, 500);",
+                            "$3.$server.onTokenSaved($1, $2);",
                             token != null ? token : "", userId, role, headerComponent.getElement()
                         );
+                        
+                        // Przekieruj na odpowiednią stronę w zależności od roli
+                        if ("RESTAURANT_ADMIN".equals(role)) {
+                            ui.navigate("restaurant");
+                        } else if ("COURIER".equals(role)) {
+                            ui.navigate("courier");
+                        } else {
+                            // Dla CLIENT - przeładuj stronę, aby zaktualizować UI
+                            ui.getPage().reload();
+                        }
                     });
                 });
                 

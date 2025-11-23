@@ -4,5 +4,6 @@ public record CourierDto(
         Long id,
         String email,
         String fullName,
-        Long restaurantId
+        Long restaurantId,
+        Boolean isAvailable
 ) {}
