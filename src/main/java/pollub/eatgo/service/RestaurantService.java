@@ -90,6 +90,7 @@ public class RestaurantService {
                 .description(req.description())
                 .price(req.price() == null ? 0.0 : req.price())
                 .available(true)
+                .category(req.category())
                 .restaurant(restaurant)
                 .build();
         dish = dishRepository.save(dish);
@@ -107,6 +108,7 @@ public class RestaurantService {
         dish.setDescription(req.description());
         if (req.price() != null) dish.setPrice(req.price());
         if (req.available() != null) dish.setAvailable(req.available());
+        if (req.category() != null) dish.setCategory(req.category());
         dish = dishRepository.save(dish);
         return toDishDto(dish);
     }
@@ -158,6 +160,17 @@ public class RestaurantService {
         restaurant.setDeliveryPrice(req.deliveryPrice() == null ? 0.0 : req.deliveryPrice());
         restaurant = restaurantRepository.save(restaurant);
         return toRestaurantDto(restaurant);
+    }
+    
+    public RestaurantDto getRestaurantForAdmin(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        return toRestaurantDto(restaurant);
+    }
+    
+    public List<DishDto> getAllDishesForAdmin(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        List<Dish> dishes = dishRepository.findByRestaurantId(restaurant.getId());
+        return dishes.stream().map(this::toDishDto).collect(Collectors.toList());
     }
 
     public List<RestaurantSummaryDto> listRestaurants() {

@@ -13,7 +13,7 @@ CREATE TABLE restaurants (
                              id BIGSERIAL PRIMARY KEY,
                              name VARCHAR(255) NOT NULL,
                              address VARCHAR(255) NOT NULL,
-                             delivery_price NUMERIC(10,2) NOT NULL DEFAULT 0,
+                             delivery_price DOUBLE PRECISION NOT NULL DEFAULT 0,
                              admin_id BIGINT NOT NULL,
                              FOREIGN KEY (admin_id) REFERENCES users(id)
 );
@@ -27,7 +27,7 @@ CREATE TABLE dishes (
                         restaurant_id BIGINT NOT NULL,
                         name VARCHAR(255) NOT NULL,
                         description TEXT,
-                        price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
+                        price DOUBLE PRECISION NOT NULL CHECK (price >= 0),
                         available BOOLEAN DEFAULT TRUE,
                         FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
 );
@@ -48,8 +48,8 @@ CREATE TABLE orders (
                         courier_id BIGINT,
                         address_id BIGINT NOT NULL,
                         status VARCHAR(50) NOT NULL DEFAULT 'PLACED',
-                        total_price NUMERIC(10,2) NOT NULL CHECK (total_price >= 0),
-                        delivery_price NUMERIC(10,2) NOT NULL DEFAULT 0,
+                        total_price DOUBLE PRECISION NOT NULL CHECK (total_price >= 0),
+                        delivery_price DOUBLE PRECISION NOT NULL DEFAULT 0,
                         created_at TIMESTAMP DEFAULT NOW(),
                         updated_at TIMESTAMP DEFAULT NOW(),
                         FOREIGN KEY (user_id) REFERENCES users(id),
@@ -63,7 +63,7 @@ CREATE TABLE order_items (
                              order_id BIGINT NOT NULL,
                              dish_id BIGINT NOT NULL,
                              quantity INT NOT NULL CHECK (quantity > 0),
-                             price_snapshot NUMERIC(10,2) NOT NULL,
+                             price_snapshot DOUBLE PRECISION NOT NULL,
                              FOREIGN KEY (order_id) REFERENCES orders(id),
                              FOREIGN KEY (dish_id) REFERENCES dishes(id)
 );

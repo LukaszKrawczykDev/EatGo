@@ -8,5 +8,6 @@ import jakarta.validation.constraints.Size;
 public record DishCreateDto(
         @NotBlank String name,
         @Size(max = 2000) String description,
-        @NotNull @PositiveOrZero Double price
+        @NotNull @PositiveOrZero Double price,
+        String category
 ) {}
