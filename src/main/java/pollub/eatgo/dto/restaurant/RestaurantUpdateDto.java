@@ -7,5 +7,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 public record RestaurantUpdateDto(
         @NotBlank String name,
         @NotBlank String address,
-        @PositiveOrZero Double deliveryPrice
+        @PositiveOrZero Double deliveryPrice,
+        String imageUrl
 ) {}

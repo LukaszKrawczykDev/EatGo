@@ -24,6 +24,7 @@ public class HeaderComponent extends Div {
     private HorizontalLayout headerActions;
     private Div userMenuContainer;
     private Div loginButtonsContainer;
+    private Div logoContainer;
     
     public HeaderComponent(AuthenticationService authService, TokenValidationService tokenValidationService) {
         this.authService = authService;
@@ -35,14 +36,9 @@ public class HeaderComponent extends Div {
         headerContent.addClassName("header-content");
         headerContent.setWidthFull();
         
-        Div logoContainer = new Div();
+        logoContainer = new Div();
         logoContainer.addClassName("logo-container");
-        RouterLink logoLink = new RouterLink("", pollub.eatgo.views.HomeView.class);
-        logoLink.addClassName("logo-link");
-        H1 logo = new H1("🍔 EatGo");
-        logo.addClassName("logo");
-        logoLink.add(logo);
-        logoContainer.add(logoLink);
+        updateLogoLink(false);
         
         headerActions = new HorizontalLayout();
         headerActions.addClassName("header-actions");
@@ -80,6 +76,21 @@ public class HeaderComponent extends Div {
         
         // Nasłuchuj zmian w localStorage (dla aktualizacji po zalogowaniu)
         setupStorageListener();
+    }
+    
+    private void updateLogoLink(boolean isRestaurantAdmin) {
+        logoContainer.removeAll();
+        RouterLink logoLink;
+        if (isRestaurantAdmin) {
+            logoLink = new RouterLink("", pollub.eatgo.views.RestaurantAdminView.class);
+        } else {
+            logoLink = new RouterLink("", pollub.eatgo.views.HomeView.class);
+        }
+        logoLink.addClassName("logo-link");
+        H1 logo = new H1("🍔 EatGo");
+        logo.addClassName("logo");
+        logoLink.add(logo);
+        logoContainer.add(logoLink);
     }
     
     /**
@@ -305,6 +316,11 @@ public class HeaderComponent extends Div {
         userMenuContainer.removeAll();
         System.out.println("userMenuContainer cleared");
         
+        boolean isRestaurantAdmin = "RESTAURANT_ADMIN".equals(role);
+        
+        // Update logo link based on role
+        updateLogoLink(isRestaurantAdmin);
+        
         // Dodaj przycisk powiadomień (tylko ikona, bez tekstu)
         Button notificationsButton = new Button(VaadinIcon.BELL.create());
         notificationsButton.addClassName("notifications-button");
@@ -314,25 +330,31 @@ public class HeaderComponent extends Div {
             Notification.show("Powiadomienia - w budowie", 2000, Notification.Position.TOP_CENTER);
         });
         
-        // Dodaj przycisk koszyków (wiele koszyków - jeden per restauracja)
-        Button cartsButton = new Button(VaadinIcon.CART.create());
-        cartsButton.addClassName("cart-button");
-        cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        cartsButton.setTooltipText("Koszyki");
-        cartsButton.addClickListener(e -> {
-            getUI().ifPresent(ui -> ui.navigate("cart"));
-        });
+        userMenuContainer.add(notificationsButton);
+
+        // Dodaj przycisk koszyków (tylko dla zwykłych użytkowników)
+        if (!isRestaurantAdmin) {
+            Button cartsButton = new Button(VaadinIcon.CART.create());
+            cartsButton.addClassName("cart-button");
+            cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+            cartsButton.setTooltipText("Koszyki");
+            cartsButton.addClickListener(e -> {
+                getUI().ifPresent(ui -> ui.navigate("cart"));
+            });
+            
+            // Dodaj badge z liczbą aktywnych koszyków
+            Span cartsBadge = new Span("0");
+            cartsBadge.addClassName("cart-badge");
+            updateCartsBadge(cartsBadge);
+            
+            Div cartContainer = new Div();
+            cartContainer.addClassName("cart-container");
+            cartContainer.add(cartsButton, cartsBadge);
+            
+            userMenuContainer.add(cartContainer);
+        }
         
-        // Dodaj badge z liczbą aktywnych koszyków
-        Span cartsBadge = new Span("0");
-        cartsBadge.addClassName("cart-badge");
-        updateCartsBadge(cartsBadge);
-        
-        Div cartContainer = new Div();
-        cartContainer.addClassName("cart-container");
-        cartContainer.add(cartsButton, cartsBadge);
-        
-        // MenuBar z rozwijanym menu "Profil"
+        // MenuBar z rozwijanym menu "Profil" lub "Restauracja"
         MenuBar userMenu = new MenuBar();
         userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
         userMenu.addClassName("user-menu");
@@ -340,35 +362,45 @@ public class HeaderComponent extends Div {
         // Włącz otwieranie menu po najechaniu (hover)
         userMenu.getElement().setProperty("openOnHover", true);
         
-        // Główny item "Profil" z ikoną i tekstem
-        var profileItem = userMenu.addItem("Profil", e -> {
+        // Główny item
+        String menuLabel = isRestaurantAdmin ? "Restauracja" : "Profil";
+        VaadinIcon menuIcon = isRestaurantAdmin ? VaadinIcon.SHOP : VaadinIcon.USER;
+
+        var profileItem = userMenu.addItem(menuLabel, e -> {
             // Kliknięcie na główny item - nie robi nic, tylko rozwija menu
         });
-        profileItem.addComponentAsFirst(VaadinIcon.USER.create());
+        profileItem.addComponentAsFirst(menuIcon.create());
         
         // Submenu dla "Profil" - wyświetla się po najechaniu
         var profileSubMenu = profileItem.getSubMenu();
         
-        var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
-            Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
-        });
-        settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
-        
-        var addressesSubItem = profileSubMenu.addItem("Adresy", e -> {
-            getUI().ifPresent(ui -> ui.navigate("addresses"));
-        });
-        addressesSubItem.addComponentAsFirst(VaadinIcon.MAP_MARKER.create());
-        
-        var ordersSubItem = profileSubMenu.addItem("Zamówienia", e -> {
-            getUI().ifPresent(ui -> ui.navigate("orders"));
-        });
-        ordersSubItem.addComponentAsFirst(VaadinIcon.LIST.create());
+        if (isRestaurantAdmin) {
+            var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
+                getUI().ifPresent(ui -> ui.navigate("restaurant/settings"));
+            });
+            settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
+        } else {
+            var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
+                Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
+            });
+            settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
+            
+            var addressesSubItem = profileSubMenu.addItem("Adresy", e -> {
+                getUI().ifPresent(ui -> ui.navigate("addresses"));
+            });
+            addressesSubItem.addComponentAsFirst(VaadinIcon.MAP_MARKER.create());
+            
+            var ordersSubItem = profileSubMenu.addItem("Zamówienia", e -> {
+                getUI().ifPresent(ui -> ui.navigate("orders"));
+            });
+            ordersSubItem.addComponentAsFirst(VaadinIcon.LIST.create());
+        }
         
         var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
         logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
         
         // Dodaj elementy do kontenera w odpowiedniej kolejności
-        userMenuContainer.add(notificationsButton, cartContainer, userMenu);
+        userMenuContainer.add(userMenu);
         System.out.println("Elements added to userMenuContainer - children count: " + userMenuContainer.getChildren().count());
         
         // Wymuś odświeżenie UI
@@ -476,4 +508,3 @@ public class HeaderComponent extends Div {
         }
     }
 }
-

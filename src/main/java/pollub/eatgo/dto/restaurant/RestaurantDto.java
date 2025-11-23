@@ -13,4 +13,5 @@ public class RestaurantDto {
     private double deliveryPrice;
     private Long adminId;
     private String adminEmail;
+    private String imageUrl;
 }

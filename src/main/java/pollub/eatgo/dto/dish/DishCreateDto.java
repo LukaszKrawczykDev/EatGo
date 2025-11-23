@@ -9,5 +9,6 @@ public record DishCreateDto(
         @NotBlank String name,
         @Size(max = 2000) String description,
         @NotNull @PositiveOrZero Double price,
-        String category
+        String category,
+        String imageUrl
 ) {}

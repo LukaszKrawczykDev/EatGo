@@ -9,5 +9,6 @@ public record DishUpdateDto(
         @Size(max = 2000) String description,
         @PositiveOrZero Double price,
         Boolean available,
-        String category
+        String category,
+        String imageUrl
 ) {}

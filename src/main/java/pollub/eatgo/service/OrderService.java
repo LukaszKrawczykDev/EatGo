@@ -109,7 +109,8 @@ public class OrderService {
 				order.getUser() != null ? order.getUser().getId() : null,
 				order.getUser() != null ? order.getUser().getEmail() : null,
 				order.getCourier() != null ? order.getCourier().getId() : null,
-				order.getCourier() != null ? order.getCourier().getEmail() : null
+				order.getCourier() != null ? order.getCourier().getEmail() : null,
+				order.getCourier() != null ? order.getCourier().getFullName() : null
 		);
 	}
 
