@@ -8,6 +8,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -474,7 +475,28 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         header.getStyle().set("flex-wrap", "wrap");
         
         dishesGrid = new Grid<>(DishDto.class, false);
-        dishesGrid.addColumn(DishDto::name).setHeader("Nazwa").setAutoWidth(true).setSortable(true);
+        dishesGrid.addColumn(new ComponentRenderer<>(dish -> {
+            HorizontalLayout nameLayout = new HorizontalLayout();
+            nameLayout.setSpacing(true);
+            nameLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+            nameLayout.setPadding(false);
+            
+            if (dish.imageUrl() != null && !dish.imageUrl().isEmpty()) {
+                Image dishImage = new Image(dish.imageUrl(), dish.name());
+                dishImage.getStyle().set("width", "40px");
+                dishImage.getStyle().set("height", "40px");
+                dishImage.getStyle().set("object-fit", "cover");
+                dishImage.getStyle().set("border-radius", "4px");
+                dishImage.getStyle().set("flex-shrink", "0");
+                nameLayout.add(dishImage);
+            }
+            
+            Span nameSpan = new Span(dish.name());
+            nameLayout.add(nameSpan);
+            nameLayout.setFlexGrow(1, nameSpan);
+            
+            return nameLayout;
+        })).setHeader("Nazwa").setAutoWidth(true).setSortable(true);
         dishesGrid.addColumn(DishDto::description).setHeader("Opis").setAutoWidth(true);
         dishesGrid.addColumn(d -> String.format("%.2f zł", d.price())).setHeader("Cena").setAutoWidth(true).setSortable(true);
         dishesGrid.addColumn(d -> d.available() ? "Dostępne" : "Niedostępne").setHeader("Status").setAutoWidth(true).setSortable(true);
