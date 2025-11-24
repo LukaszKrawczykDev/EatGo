@@ -56,6 +56,48 @@
   margin-bottom: 2rem;
 }
 
+/* ===== Horizontal Scrollable Orders ===== */
+
+.orders-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+.orders-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.orders-scroll-container::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.orders-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.orders-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+.orders-horizontal-container {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: max-content;
+  min-width: 100%;
+  padding-right: 1rem;
+}
+
+.courier-order-card {
+  flex-shrink: 0;
+}
+
 .courier-section-title {
   margin-bottom: 1.5rem;
   color: var(--text-primary);
@@ -70,9 +112,12 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: var(--bg-primary);
-  margin-bottom: 1rem;
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
+  min-width: 350px;
+  max-width: 400px;
+  flex-shrink: 0;
+  height: fit-content;
 }
 
 .courier-order-card:hover {

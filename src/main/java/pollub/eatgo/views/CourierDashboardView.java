@@ -39,9 +39,10 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
     private Tabs tabs;
     private Div ordersContent;
     private Div reviewsContent;
-    private VerticalLayout activeOrdersContainer;
-    private VerticalLayout deliveredOrdersContainer;
+    private HorizontalLayout activeOrdersContainer;
+    private HorizontalLayout deliveredOrdersContainer;
     private VerticalLayout reviewsContainer;
+    private Button refreshButton;
     
     public CourierDashboardView(AuthenticationService authService, TokenValidationService tokenValidationService) {
         this.authService = authService;
@@ -69,11 +70,18 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         content.getStyle().set("background-color", "var(--bg-secondary)");
         content.getStyle().set("min-height", "calc(100vh - 80px)");
         
-        // Tabs
+        // Tabs z przyciskiem odświeżania
+        HorizontalLayout tabsHeader = new HorizontalLayout();
+        tabsHeader.setWidthFull();
+        tabsHeader.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+        tabsHeader.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+        tabsHeader.setSpacing(true);
+        
         Tab ordersTab = new Tab("Moje zamówienia");
         Tab reviewsTab = new Tab("Moje oceny");
         tabs = new Tabs(ordersTab, reviewsTab);
         tabs.addClassName("courier-dashboard-tabs");
+        tabs.getStyle().set("flex-grow", "1");
         tabs.addSelectedChangeListener(event -> {
             if (event.getSelectedTab() == ordersTab) {
                 showOrdersContent();
@@ -82,6 +90,18 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
             }
         });
         
+        refreshButton = new Button("Odśwież", VaadinIcon.REFRESH.create());
+        refreshButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        refreshButton.addClickListener(e -> {
+            if (ordersTab.isSelected()) {
+                loadOrders();
+            } else if (reviewsTab.isSelected()) {
+                loadReviews();
+            }
+        });
+        
+        tabsHeader.add(tabs, refreshButton);
+        
         // Orders content
         ordersContent = new Div();
         ordersContent.addClassName("courier-orders-content");
@@ -89,24 +109,48 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         
         Div activeSection = new Div();
         activeSection.addClassName("courier-section");
+        activeSection.setWidthFull();
+        
         H3 activeTitle = new H3("Aktywne dostawy");
         activeTitle.addClassName("courier-section-title");
-        activeOrdersContainer = new VerticalLayout();
+        
+        // Poziomy kontener z przewijaniem dla aktywnych zamówień
+        Div activeOrdersScrollContainer = new Div();
+        activeOrdersScrollContainer.addClassName("orders-scroll-container");
+        activeOrdersScrollContainer.setWidthFull();
+        
+        activeOrdersContainer = new HorizontalLayout();
+        activeOrdersContainer.addClassName("orders-horizontal-container");
         activeOrdersContainer.setSpacing(true);
         activeOrdersContainer.setPadding(false);
-        activeOrdersContainer.setWidthFull();
-        activeSection.add(activeTitle, activeOrdersContainer);
+        activeOrdersContainer.setWidth(null);
+        activeOrdersContainer.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.STRETCH);
+        
+        activeOrdersScrollContainer.add(activeOrdersContainer);
+        activeSection.add(activeTitle, activeOrdersScrollContainer);
         
         Div deliveredSection = new Div();
         deliveredSection.addClassName("courier-section");
         deliveredSection.getStyle().set("margin-top", "3rem");
+        deliveredSection.setWidthFull();
+        
         H3 deliveredTitle = new H3("Zakończone dostawy");
         deliveredTitle.addClassName("courier-section-title");
-        deliveredOrdersContainer = new VerticalLayout();
+        
+        // Poziomy kontener z przewijaniem dla zakończonych zamówień
+        Div deliveredOrdersScrollContainer = new Div();
+        deliveredOrdersScrollContainer.addClassName("orders-scroll-container");
+        deliveredOrdersScrollContainer.setWidthFull();
+        
+        deliveredOrdersContainer = new HorizontalLayout();
+        deliveredOrdersContainer.addClassName("orders-horizontal-container");
         deliveredOrdersContainer.setSpacing(true);
         deliveredOrdersContainer.setPadding(false);
-        deliveredOrdersContainer.setWidthFull();
-        deliveredSection.add(deliveredTitle, deliveredOrdersContainer);
+        deliveredOrdersContainer.setWidth(null);
+        deliveredOrdersContainer.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.STRETCH);
+        
+        deliveredOrdersScrollContainer.add(deliveredOrdersContainer);
+        deliveredSection.add(deliveredTitle, deliveredOrdersScrollContainer);
         
         ordersContent.add(activeSection, deliveredSection);
         
@@ -128,7 +172,7 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         
         reviewsContent.add(reviewsSection);
         
-        content.add(tabs, ordersContent, reviewsContent);
+        content.add(tabsHeader, ordersContent, reviewsContent);
         add(content);
     }
     
@@ -252,8 +296,11 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
                         Div emptyMsg = new Div();
                         emptyMsg.setText("Brak aktywnych dostaw");
                         emptyMsg.addClassName("empty-state-message");
+                        emptyMsg.getStyle().set("width", "100%");
+                        activeOrdersContainer.removeAll();
                         activeOrdersContainer.add(emptyMsg);
                     } else {
+                        activeOrdersContainer.removeAll();
                         for (OrderDetailsDto order : activeOrders) {
                             activeOrdersContainer.add(createOrderCard(order, true));
                         }
@@ -263,8 +310,11 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
                         Div emptyMsg = new Div();
                         emptyMsg.setText("Brak zakończonych dostaw");
                         emptyMsg.addClassName("empty-state-message");
+                        emptyMsg.getStyle().set("width", "100%");
+                        deliveredOrdersContainer.removeAll();
                         deliveredOrdersContainer.add(emptyMsg);
                     } else {
+                        deliveredOrdersContainer.removeAll();
                         for (OrderDetailsDto order : deliveredOrders) {
                             deliveredOrdersContainer.add(createOrderCard(order, false));
                         }

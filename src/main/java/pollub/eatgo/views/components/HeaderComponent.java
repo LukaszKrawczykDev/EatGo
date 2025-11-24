@@ -385,11 +385,6 @@ public class HeaderComponent extends Div {
                 getUI().ifPresent(ui -> ui.navigate("courier"));
             });
             dashboardSubItem.addComponentAsFirst(VaadinIcon.DASHBOARD.create());
-            
-            var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
-                Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
-            });
-            settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
         } else {
             var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
                 Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
