@@ -385,8 +385,14 @@ public class RestaurantService {
     }
 
     private CourierDto toCourierDto(User u) {
-        // Check if courier has an active delivery (IN_DELIVERY status)
-        boolean isAvailable = !orderRepository.existsByCourierIdAndStatus(u.getId(), OrderStatus.IN_DELIVERY);
+        // Kurier może mieć wiele zamówień jednocześnie, więc zawsze jest dostępny
+        // Można sprawdzić liczbę aktywnych dostaw, ale nie blokujemy przypisania
+        long activeDeliveries = orderRepository.findByCourierIdOrderByCreatedAtDesc(u.getId()).stream()
+            .filter(o -> o.getStatus() == OrderStatus.IN_DELIVERY)
+            .count();
+        // Kurier jest dostępny (może przyjąć więcej zamówień)
+        // Można pokazać liczbę aktywnych dostaw w UI, ale nie blokujemy
+        boolean isAvailable = true;
         return new CourierDto(
             u.getId(), 
             u.getEmail(), 

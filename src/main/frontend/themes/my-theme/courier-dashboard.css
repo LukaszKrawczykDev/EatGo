@@ -1,0 +1,328 @@
+/* ===== Courier Dashboard Styles ===== */
+
+.courier-dashboard-view {
+  background-color: var(--bg-secondary) !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.courier-dashboard-view::before {
+  content: "";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-secondary);
+  z-index: -1;
+}
+
+.courier-dashboard-content {
+  width: 100%;
+  background-color: var(--bg-secondary);
+  min-height: calc(100vh - 80px);
+  padding-bottom: 3rem;
+}
+
+.courier-dashboard-title {
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.courier-dashboard-tabs {
+  margin-bottom: 2rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.courier-dashboard-tabs vaadin-tab {
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+}
+
+.courier-dashboard-tabs vaadin-tab[selected] {
+  color: var(--accent-color);
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.courier-section {
+  margin-bottom: 2rem;
+}
+
+/* ===== Horizontal Scrollable Orders ===== */
+
+.orders-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+.orders-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.orders-scroll-container::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.orders-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.orders-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+.orders-horizontal-container {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: max-content;
+  min-width: 100%;
+  padding-right: 1rem;
+}
+
+.courier-order-card {
+  flex-shrink: 0;
+}
+
+.courier-section-title {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* ===== Order Cards ===== */
+
+.courier-order-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  min-width: 350px;
+  max-width: 400px;
+  flex-shrink: 0;
+  height: fit-content;
+}
+
+.courier-order-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.order-number {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin-right: 1rem;
+}
+
+.order-date {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.order-status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.order-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.order-items-info,
+.order-total-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.order-total-info {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.empty-state-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* ===== Address Section ===== */
+
+.delivery-address-section {
+  border-left: 4px solid var(--accent-color) !important;
+}
+
+.address-label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--accent-color);
+}
+
+.address-value {
+  font-size: 1.1rem;
+  display: block;
+  color: var(--text-primary);
+}
+
+.restaurant-section {
+  margin-top: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.restaurant-label {
+  font-weight: bold;
+}
+
+.restaurant-name {
+  color: var(--text-primary);
+}
+
+/* ===== Order Items ===== */
+
+.order-items-container {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.order-total-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ===== Review Cards ===== */
+
+.courier-review-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.reviews-stats-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.reviews-stats-text {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.reviewer-name {
+  font-weight: bold;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.rating-stars {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--accent-color);
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.review-comment {
+  margin-top: 0.75rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-style: italic;
+}
+
+.review-date {
+  margin-top: 0.5rem;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
+/* ===== Dark Mode Support ===== */
+
+[data-theme="dark"] .courier-order-card,
+[data-theme="dark"] .courier-review-card {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .courier-order-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .order-status-badge {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .reviews-stats-card {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+}
+
+[data-theme="dark"] .review-comment {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ===== Responsive Design ===== */
+
+@media (max-width: 768px) {
+  .courier-dashboard-content {
+    padding: 1rem;
+  }
+
+  .courier-dashboard-title {
+    font-size: 1.5rem;
+  }
+
+  .courier-order-card,
+  .courier-review-card {
+    padding: 1rem;
+  }
+
+  .courier-dashboard-tabs vaadin-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
