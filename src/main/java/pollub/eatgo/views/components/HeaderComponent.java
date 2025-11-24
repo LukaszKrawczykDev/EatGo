@@ -317,6 +317,7 @@ public class HeaderComponent extends Div {
         System.out.println("userMenuContainer cleared");
         
         boolean isRestaurantAdmin = "RESTAURANT_ADMIN".equals(role);
+        boolean isCourier = "COURIER".equals(role);
         
         // Update logo link based on role
         updateLogoLink(isRestaurantAdmin);
@@ -333,7 +334,7 @@ public class HeaderComponent extends Div {
         userMenuContainer.add(notificationsButton);
 
         // Dodaj przycisk koszyków (tylko dla zwykłych użytkowników)
-        if (!isRestaurantAdmin) {
+        if (!isRestaurantAdmin && !isCourier) {
             Button cartsButton = new Button(VaadinIcon.CART.create());
             cartsButton.addClassName("cart-button");
             cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
@@ -363,8 +364,8 @@ public class HeaderComponent extends Div {
         userMenu.getElement().setProperty("openOnHover", true);
         
         // Główny item
-        String menuLabel = isRestaurantAdmin ? "Restauracja" : "Profil";
-        VaadinIcon menuIcon = isRestaurantAdmin ? VaadinIcon.SHOP : VaadinIcon.USER;
+        String menuLabel = isRestaurantAdmin ? "Restauracja" : (isCourier ? "Kurier" : "Profil");
+        VaadinIcon menuIcon = isRestaurantAdmin ? VaadinIcon.SHOP : (isCourier ? VaadinIcon.PACKAGE : VaadinIcon.USER);
 
         var profileItem = userMenu.addItem(menuLabel, e -> {
             // Kliknięcie na główny item - nie robi nic, tylko rozwija menu
@@ -377,6 +378,16 @@ public class HeaderComponent extends Div {
         if (isRestaurantAdmin) {
             var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
                 getUI().ifPresent(ui -> ui.navigate("restaurant/settings"));
+            });
+            settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
+        } else if (isCourier) {
+            var dashboardSubItem = profileSubMenu.addItem("Panel kuriera", e -> {
+                getUI().ifPresent(ui -> ui.navigate("courier"));
+            });
+            dashboardSubItem.addComponentAsFirst(VaadinIcon.DASHBOARD.create());
+            
+            var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
+                Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
             });
             settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
         } else {

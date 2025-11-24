@@ -14,6 +14,7 @@
 @import url('restaurant-view.css');
 @import url('cart.css');
 @import url('checkout.css');
+@import url('courier-dashboard.css');
 
 /* ===== Utility ===== */
 vaadin-text-field.search-input::part(input-field) {
