@@ -590,13 +590,19 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         couriersGrid.addColumn(CourierDto::email).setHeader("Email").setAutoWidth(true);
         couriersGrid.addColumn(CourierDto::fullName).setHeader("Imię i nazwisko").setAutoWidth(true);
         couriersGrid.addColumn(new ComponentRenderer<>(courier -> {
-            Span statusBadge = new Span(courier.isAvailable() != null && courier.isAvailable() ? "Dostępny" : "W trakcie dostawy");
+            // Policz aktywne dostawy dla kuriera
+            long activeDeliveries = orders.stream()
+                .filter(o -> o.courierId() != null && o.courierId().equals(courier.id()) && "IN_DELIVERY".equals(o.status()))
+                .count();
+            
+            String statusText = activeDeliveries == 0 ? "Dostępny" : activeDeliveries + " aktywnych dostaw";
+            Span statusBadge = new Span(statusText);
             statusBadge.addClassName("courier-status-badge");
             statusBadge.getStyle().set("padding", "0.25rem 0.75rem");
             statusBadge.getStyle().set("border-radius", "12px");
             statusBadge.getStyle().set("font-size", "0.875rem");
             statusBadge.getStyle().set("font-weight", "500");
-            if (courier.isAvailable() != null && courier.isAvailable()) {
+            if (activeDeliveries == 0) {
                 statusBadge.getStyle().set("color", "var(--lumo-success-text-color)");
                 statusBadge.getStyle().set("background-color", "var(--lumo-success-color-10pct)");
             } else {
@@ -625,13 +631,25 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             if (filter != null) {
                 switch (filter) {
                     case "Dostępni":
+                        // Kurierzy bez aktywnych dostaw
                         filtered = couriers.stream()
-                            .filter(c -> c.isAvailable() != null && c.isAvailable())
+                            .filter(c -> {
+                                long activeDeliveries = orders.stream()
+                                    .filter(o -> o.courierId() != null && o.courierId().equals(c.id()) && "IN_DELIVERY".equals(o.status()))
+                                    .count();
+                                return activeDeliveries == 0;
+                            })
                             .collect(Collectors.toList());
                         break;
                     case "W trakcie dostawy":
+                        // Kurierzy z aktywnymi dostawami
                         filtered = couriers.stream()
-                            .filter(c -> c.isAvailable() == null || !c.isAvailable())
+                            .filter(c -> {
+                                long activeDeliveries = orders.stream()
+                                    .filter(o -> o.courierId() != null && o.courierId().equals(c.id()) && "IN_DELIVERY".equals(o.status()))
+                                    .count();
+                                return activeDeliveries > 0;
+                            })
                             .collect(Collectors.toList());
                         break;
                 }
@@ -688,15 +706,11 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         dialog.setHeaderTitle("Przypisz kuriera do zamówienia #" + order.id());
         dialog.setModal(true);
         
-        // Filter only available couriers
-        List<CourierDto> availableCouriers = couriers.stream()
-            .filter(c -> c.isAvailable() != null && c.isAvailable())
-            .collect(Collectors.toList());
-        
-        if (availableCouriers.isEmpty()) {
+        // Pokaż wszystkich kurierów - kurier może mieć wiele zamówień jednocześnie
+        if (couriers.isEmpty()) {
             VerticalLayout content = new VerticalLayout();
             content.setSpacing(true);
-            content.add(new Span("Brak dostępnych kurierów w tym momencie. Wszyscy kurierzy są w trakcie realizacji dostawy."));
+            content.add(new Span("Brak kurierów przypisanych do restauracji."));
             Button closeBtn = new Button("Zamknij", e -> dialog.close());
             dialog.add(content);
             dialog.getFooter().add(closeBtn);
@@ -705,8 +719,18 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         }
         
         ComboBox<CourierDto> courierCombo = new ComboBox<>("Wybierz kuriera");
-        courierCombo.setItems(availableCouriers);
-        courierCombo.setItemLabelGenerator(c -> c.fullName() + " (" + c.email() + ") - Dostępny");
+        courierCombo.setItems(couriers);
+        courierCombo.setItemLabelGenerator(c -> {
+            // Policz aktywne dostawy dla kuriera
+            long activeDeliveries = orders.stream()
+                .filter(o -> o.courierId() != null && o.courierId().equals(c.id()) && "IN_DELIVERY".equals(o.status()))
+                .count();
+            if (activeDeliveries > 0) {
+                return c.fullName() + " (" + c.email() + ") - " + activeDeliveries + " aktywnych dostaw";
+            } else {
+                return c.fullName() + " (" + c.email() + ") - Dostępny";
+            }
+        });
         courierCombo.setWidthFull();
         
         Button assignBtn = new Button("Przypisz", e -> {
