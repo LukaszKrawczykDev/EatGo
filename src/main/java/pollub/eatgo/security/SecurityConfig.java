@@ -60,7 +60,7 @@ public class SecurityConfig {
                         // API - chronione endpointy
 						.requestMatchers("/api/restaurant/**", "/api/admin/**").hasRole("RESTAURANT_ADMIN")
                         .requestMatchers("/api/courier/**").hasRole("COURIER")
-                        .requestMatchers("/api/addresses/**", "/api/orders/**", "/api/reviews/**").hasRole("CLIENT")
+                        .requestMatchers("/api/addresses/**", "/api/orders/**", "/api/reviews/**", "/api/users/**").hasRole("CLIENT")
                         // Wszystkie inne żądania wymagają uwierzytelnienia
                         .anyRequest().authenticated()
                 );

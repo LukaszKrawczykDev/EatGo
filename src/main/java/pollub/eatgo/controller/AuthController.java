@@ -98,4 +98,28 @@ public class AuthController {
 
         return ResponseEntity.ok(new AuthDto.AuthResponse(token, user.getId(), user.getRole().name()));
     }
+    
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody @Valid AuthDto.ChangePasswordRequest body,
+            org.springframework.security.core.Authentication auth) {
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Sprawdź czy stare hasło jest poprawne
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, body.getOldPassword())
+            );
+        } catch (AuthenticationException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nieprawidłowe obecne hasło");
+        }
+        
+        // Zmień hasło
+        user.setPassword(passwordEncoder.encode(body.getNewPassword()));
+        userRepository.save(user);
+        
+        return ResponseEntity.ok("Hasło zostało zmienione pomyślnie");
+    }
 }

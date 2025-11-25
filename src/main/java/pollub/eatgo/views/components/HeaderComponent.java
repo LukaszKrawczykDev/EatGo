@@ -350,7 +350,7 @@ public class HeaderComponent extends Div {
         var profileSubMenu = profileItem.getSubMenu();
         
         var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
-            Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
+            getUI().ifPresent(ui -> ui.navigate("settings"));
         });
         settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
         

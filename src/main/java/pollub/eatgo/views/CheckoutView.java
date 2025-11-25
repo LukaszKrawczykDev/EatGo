@@ -192,13 +192,78 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     System.out.println("CheckoutView.loadAddressesForUser: Loaded " + addresses.size() + " addresses for user " + userId);
                     currentAddresses = new ArrayList<>(addresses); // Zapisz mutowalną listę
                     addressComboBox.setItems(currentAddresses);
-                    if (addressComboBox.getValue() == null && !currentAddresses.isEmpty()) {
-                        addressComboBox.setValue(currentAddresses.get(0)); // Ustaw pierwszy jako domyślny tylko gdy nic nie wybrano
-                    }
+                    
+                    // Załaduj domyślny adres z API
+                    getElement().executeJs(
+                        "const token = localStorage.getItem('eatgo-token'); " +
+                        "if (token && token !== 'null' && token !== '') { " +
+                        "  fetch('/api/users/settings', { " +
+                        "    method: 'GET', " +
+                        "    headers: { " +
+                        "      'Authorization': 'Bearer ' + token, " +
+                        "      'Content-Type': 'application/json' " +
+                        "    } " +
+                        "  }) " +
+                        "  .then(r => { " +
+                        "    if (!r.ok) { " +
+                        "      console.warn('Failed to load user settings'); " +
+                        "      return null; " +
+                        "    } " +
+                        "    return r.json(); " +
+                        "  }) " +
+                        "  .then(settings => { " +
+                        "    if (settings && settings.defaultAddressId) { " +
+                        "      $0.$server.setDefaultAddress(String(settings.defaultAddressId)); " +
+                        "    } else if ($1.length > 0) { " +
+                        "      // Jeśli nie ma domyślnego, ustaw pierwszy adres " +
+                        "      $0.$server.setDefaultAddress(null); " +
+                        "    } " +
+                        "  }) " +
+                        "  .catch(e => { " +
+                        "    console.error('Error loading user settings:', e); " +
+                        "    // Fallback: ustaw pierwszy adres jeśli są dostępne " +
+                        "    if ($1.length > 0) { " +
+                        "      $0.$server.setDefaultAddress(null); " +
+                        "    } " +
+                        "  }); " +
+                        "} else if ($1.length > 0) { " +
+                        "  // Dla niezalogowanych, ustaw pierwszy adres " +
+                        "  $0.$server.setDefaultAddress(null); " +
+                        "}",
+                        getElement(), addresses.size()
+                    );
                 } catch (Exception e) {
                     System.err.println("CheckoutView: Error loading addresses: " + e.getMessage());
                     e.printStackTrace();
                     Notification.show("Błąd podczas ładowania adresów: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+                }
+            });
+        });
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    public void setDefaultAddress(String addressIdStr) {
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                if (addressIdStr == null || addressIdStr.isEmpty() || "null".equals(addressIdStr)) {
+                    // Ustaw pierwszy adres jako domyślny
+                    if (!currentAddresses.isEmpty() && addressComboBox.getValue() == null) {
+                        addressComboBox.setValue(currentAddresses.get(0));
+                    }
+                } else {
+                    try {
+                        Long addressId = Long.parseLong(addressIdStr);
+                        currentAddresses.stream()
+                            .filter(a -> a.id().equals(addressId))
+                            .findFirst()
+                            .ifPresent(addressComboBox::setValue);
+                    } catch (NumberFormatException e) {
+                        System.err.println("CheckoutView: Invalid address ID format: " + addressIdStr);
+                        // Fallback: ustaw pierwszy adres
+                        if (!currentAddresses.isEmpty() && addressComboBox.getValue() == null) {
+                            addressComboBox.setValue(currentAddresses.get(0));
+                        }
+                    }
                 }
             });
         });

@@ -37,6 +37,14 @@ public class User {
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
+    private String defaultCity;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "default_address_id")
+    private Address defaultAddress;
+    
+    private String theme; // "light" or "dark"
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

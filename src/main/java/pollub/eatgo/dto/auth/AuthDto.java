@@ -45,4 +45,14 @@ public class AuthDto {
         private Long userId;
         private String role;
     }
+    
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ChangePasswordRequest {
+        @NotBlank
+        private String oldPassword;
+        @NotBlank
+        private String newPassword;
+    }
 }

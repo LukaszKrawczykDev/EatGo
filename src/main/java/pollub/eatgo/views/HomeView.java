@@ -158,25 +158,50 @@ public class HomeView extends VerticalLayout {
         locationBtn.getStyle().set("align-items", "center");
         locationBtn.getStyle().set("justify-content", "center");
         
-        // Sprawdź czy użytkownik jest zalogowany i zaktualizuj widok
+        // Załaduj domyślne miasto z API dla zalogowanych użytkowników
         getElement().executeJs(
-            "const isLoggedIn = localStorage.getItem('eatgo-token') !== null; " +
-            "const savedCity = localStorage.getItem('eatgo-city'); " +
-            "if (isLoggedIn && savedCity) { " +
-            "  const display = document.querySelector('.saved-city-display'); " +
-            "  const changeBtn = document.querySelector('.change-city-btn'); " +
-            "  const comboBox = document.querySelector('.city-selector'); " +
-            "  if (display && changeBtn && comboBox) { " +
-            "    display.textContent = savedCity; " +
-            "    display.style.display = 'block'; " +
-            "    changeBtn.style.display = 'inline-flex'; " +
-            "    comboBox.style.display = 'none'; " +
-            "  } " +
-            "} else if (savedCity) { " +
-            "  const comboBox = document.querySelector('.city-selector'); " +
-            "  if (comboBox) { " +
-            "    comboBox.value = savedCity; " +
-            "    comboBox.dispatchEvent(new Event('change')); " +
+            "const token = localStorage.getItem('eatgo-token'); " +
+            "if (token && token !== 'null' && token !== '') { " +
+            "  fetch('/api/users/settings', { " +
+            "    method: 'GET', " +
+            "    headers: { " +
+            "      'Authorization': 'Bearer ' + token, " +
+            "      'Content-Type': 'application/json' " +
+            "    } " +
+            "  }) " +
+            "  .then(r => { " +
+            "    if (!r.ok) { " +
+            "      console.warn('Failed to load user settings'); " +
+            "      return null; " +
+            "    } " +
+            "    return r.json(); " +
+            "  }) " +
+            "  .then(settings => { " +
+            "    if (settings && settings.defaultCity) { " +
+            "      const display = document.querySelector('.saved-city-display'); " +
+            "      const changeBtn = document.querySelector('.change-city-btn'); " +
+            "      const comboBox = document.querySelector('.city-selector'); " +
+            "      if (display && changeBtn && comboBox) { " +
+            "        display.textContent = settings.defaultCity; " +
+            "        display.style.display = 'block'; " +
+            "        changeBtn.style.display = 'inline-flex'; " +
+            "        comboBox.style.display = 'none'; " +
+            "        $0.$server.setSelectedCity(settings.defaultCity); " +
+            "      } " +
+            "    } " +
+            "  }) " +
+            "  .catch(e => { " +
+            "    console.error('Error loading user settings:', e); " +
+            "  }); " +
+            "} else { " +
+            "  // Dla niezalogowanych, sprawdź localStorage " +
+            "  const savedCity = localStorage.getItem('eatgo-city'); " +
+            "  if (savedCity) { " +
+            "    const comboBox = document.querySelector('.city-selector'); " +
+            "    if (comboBox) { " +
+            "      comboBox.value = savedCity; " +
+            "      comboBox.dispatchEvent(new Event('change')); " +
+            "    } " +
             "  } " +
             "}"
         );
@@ -219,6 +244,12 @@ public class HomeView extends VerticalLayout {
             "}",
             getElement()
         );
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    private void setSelectedCity(String city) {
+        selectedCity = city;
+        filterRestaurants();
     }
     
     @com.vaadin.flow.component.ClientCallable
