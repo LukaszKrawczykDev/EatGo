@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Vaadin - dostęp publiczny do interfejsu
                         .requestMatchers("/", "/VAADIN/**", "/HILLA/**", "/frontend/**", "/themes/**", "/sw.js", "/manifest.webmanifest", "/offline.html", "/offline-stub.html").permitAll()
+                        // Widoki Vaadin - dostęp publiczny (widoki same sprawdzą autoryzację)
+                        .requestMatchers("/restaurant", "/courier", "/restaurant-view/**", "/checkout/**", "/cart", "/orders", "/profile").permitAll()
                         // Statyczne zasoby - zdjęcia
                         .requestMatchers("/images/**", "/static/**").permitAll()
                         // API - publiczne endpointy

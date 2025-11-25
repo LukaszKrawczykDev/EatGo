@@ -76,12 +76,34 @@ public class HomeView extends VerticalLayout {
     
     private void checkUserRoleAndRedirect() {
         getElement().executeJs(
+            "const token = localStorage.getItem('eatgo-token'); " +
             "const role = localStorage.getItem('eatgo-role'); " +
-            "if (role) { " +
-            "  if (role === 'RESTAURANT_ADMIN') { " +
-            "    window.location.href = '/restaurant'; " +
-            "  } else if (role === 'COURIER') { " +
-            "    window.location.href = '/courier'; " +
+            "if (token && token !== 'null' && role) { " +
+            "  // Sprawdź czy token jest ważny (podstawowa walidacja) " +
+            "  try { " +
+            "    const parts = token.split('.'); " +
+            "    if (parts.length === 3) { " +
+            "      const payload = JSON.parse(atob(parts[1])); " +
+            "      const exp = payload.exp * 1000; " +
+            "      const now = Date.now(); " +
+            "      if (exp > now) { " +
+            "        if (role === 'RESTAURANT_ADMIN') { " +
+            "          window.location.href = '/restaurant'; " +
+            "        } else if (role === 'COURIER') { " +
+            "          window.location.href = '/courier'; " +
+            "        } " +
+            "      } else { " +
+            "        // Token wygasł - wyczyść localStorage " +
+            "        localStorage.removeItem('eatgo-token'); " +
+            "        localStorage.removeItem('eatgo-userId'); " +
+            "        localStorage.removeItem('eatgo-role'); " +
+            "      } " +
+            "    } " +
+            "  } catch (e) { " +
+            "    // Nieprawidłowy token - wyczyść localStorage " +
+            "    localStorage.removeItem('eatgo-token'); " +
+            "    localStorage.removeItem('eatgo-userId'); " +
+            "    localStorage.removeItem('eatgo-role'); " +
             "  } " +
             "}"
         );

@@ -8,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pollub.eatgo.dto.courier.CourierCreateDto;
 import pollub.eatgo.dto.courier.CourierDto;
+import pollub.eatgo.dto.courier.CourierUpdateDto;
 import pollub.eatgo.dto.dish.DishCreateDto;
 import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.dish.DishUpdateDto;
@@ -90,6 +91,8 @@ public class RestaurantService {
                 .description(req.description())
                 .price(req.price() == null ? 0.0 : req.price())
                 .available(true)
+                .category(req.category())
+                .imageUrl(req.imageUrl())
                 .restaurant(restaurant)
                 .build();
         dish = dishRepository.save(dish);
@@ -107,6 +110,8 @@ public class RestaurantService {
         dish.setDescription(req.description());
         if (req.price() != null) dish.setPrice(req.price());
         if (req.available() != null) dish.setAvailable(req.available());
+        if (req.category() != null) dish.setCategory(req.category());
+        if (req.imageUrl() != null) dish.setImageUrl(req.imageUrl());
         dish = dishRepository.save(dish);
         return toDishDto(dish);
     }
@@ -144,6 +149,24 @@ public class RestaurantService {
         return toCourierDto(courier);
     }
 
+    public CourierDto updateCourier(String adminEmail, Long courierId, CourierUpdateDto req) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        User courier = userRepository.findByIdAndRestaurantId(courierId, restaurant.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found for your restaurant"));
+        
+        // Check if email is being changed and if new email is already taken
+        if (!courier.getEmail().equals(req.email())) {
+            if (userRepository.findByEmail(req.email()).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User with this email already exists");
+            }
+        }
+        
+        courier.setEmail(req.email());
+        courier.setFullName(req.fullName());
+        courier = userRepository.save(courier);
+        return toCourierDto(courier);
+    }
+
     public void deleteCourier(String adminEmail, Long courierId) {
         Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
         User courier = userRepository.findByIdAndRestaurantId(courierId, restaurant.getId())
@@ -156,8 +179,67 @@ public class RestaurantService {
         restaurant.setName(req.name());
         restaurant.setAddress(req.address());
         restaurant.setDeliveryPrice(req.deliveryPrice() == null ? 0.0 : req.deliveryPrice());
+        if (req.imageUrl() != null) restaurant.setImageUrl(req.imageUrl());
         restaurant = restaurantRepository.save(restaurant);
         return toRestaurantDto(restaurant);
+    }
+    
+    public RestaurantDto getRestaurantForAdmin(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        return toRestaurantDto(restaurant);
+    }
+    
+    public List<DishDto> getAllDishesForAdmin(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        List<Dish> dishes = dishRepository.findByRestaurantId(restaurant.getId());
+        return dishes.stream().map(this::toDishDto).collect(Collectors.toList());
+    }
+    
+    // Statistics methods
+    public double getTodayRevenue(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        List<Order> todayOrders = orderRepository.findByRestaurantIdAndCreatedAtAfter(restaurant.getId(), todayStart);
+        return todayOrders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
+                .mapToDouble(Order::getTotalPrice)
+                .sum();
+    }
+    
+    public long getTodayOrdersCount(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        return orderRepository.countByRestaurantIdAndCreatedAtAfter(restaurant.getId(), todayStart);
+    }
+    
+    public long getActiveOrdersCount(String adminEmail) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        return orderRepository.countByRestaurantIdAndStatusIn(
+            restaurant.getId(),
+            List.of(OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.COOKING, OrderStatus.READY, OrderStatus.IN_DELIVERY)
+        );
+    }
+    
+    public java.util.Map<String, Integer> getTopDishes(String adminEmail, int limit) {
+        Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
+        List<Order> allOrders = orderRepository.findByRestaurantId(restaurant.getId());
+        
+        return allOrders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
+                .flatMap(o -> o.getItems().stream())
+                .collect(Collectors.groupingBy(
+                    item -> item.getDish() != null ? item.getDish().getName() : "Unknown",
+                    Collectors.summingInt(OrderItem::getQuantity)
+                ))
+                .entrySet().stream()
+                .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
+                .limit(limit)
+                .collect(Collectors.toMap(
+                    java.util.Map.Entry::getKey,
+                    java.util.Map.Entry::getValue,
+                    (e1, e2) -> e1,
+                    java.util.LinkedHashMap::new
+                ));
     }
 
     public List<RestaurantSummaryDto> listRestaurants() {
@@ -297,22 +379,38 @@ public class RestaurantService {
                 order.getUser() != null ? order.getUser().getId() : null,
                 order.getUser() != null ? order.getUser().getEmail() : null,
                 order.getCourier() != null ? order.getCourier().getId() : null,
-                order.getCourier() != null ? order.getCourier().getEmail() : null
+                order.getCourier() != null ? order.getCourier().getEmail() : null,
+                order.getCourier() != null ? order.getCourier().getFullName() : null
         );
     }
 
     private CourierDto toCourierDto(User u) {
-        return new CourierDto(u.getId(), u.getEmail(), u.getFullName(), u.getRestaurant() != null ? u.getRestaurant().getId() : null);
+        // Kurier może mieć wiele zamówień jednocześnie, więc zawsze jest dostępny
+        // Można sprawdzić liczbę aktywnych dostaw, ale nie blokujemy przypisania
+        long activeDeliveries = orderRepository.findByCourierIdOrderByCreatedAtDesc(u.getId()).stream()
+            .filter(o -> o.getStatus() == OrderStatus.IN_DELIVERY)
+            .count();
+        // Kurier jest dostępny (może przyjąć więcej zamówień)
+        // Można pokazać liczbę aktywnych dostaw w UI, ale nie blokujemy
+        boolean isAvailable = true;
+        return new CourierDto(
+            u.getId(), 
+            u.getEmail(), 
+            u.getFullName(), 
+            u.getRestaurant() != null ? u.getRestaurant().getId() : null,
+            isAvailable
+        );
     }
 
-    private RestaurantDto toRestaurantDto(Restaurant r) {
+    public RestaurantDto toRestaurantDto(Restaurant r) {
         return new RestaurantDto(
                 r.getId(),
                 r.getName(),
                 r.getAddress(),
                 r.getDeliveryPrice(),
                 r.getAdmin() != null ? r.getAdmin().getId() : null,
-                r.getAdmin() != null ? r.getAdmin().getEmail() : null
+                r.getAdmin() != null ? r.getAdmin().getEmail() : null,
+                r.getImageUrl()
         );
     }
 }

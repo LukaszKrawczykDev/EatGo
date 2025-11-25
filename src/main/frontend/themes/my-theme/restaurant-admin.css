@@ -1,0 +1,235 @@
+/* Restaurant Admin View Styles */
+.restaurant-admin-view {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.restaurant-admin-tabs {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 1rem;
+}
+
+.restaurant-admin-content {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    min-height: calc(100vh - 200px);
+}
+
+/* Statistics Cards */
+.stats-container {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex: 1;
+    min-width: 200px;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Dark mode support */
+[data-theme="dark"] .restaurant-admin-view {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .restaurant-admin-tabs {
+    background: var(--bg-primary);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .restaurant-admin-content {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .stat-card {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .stat-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Grid styling for dark mode */
+[data-theme="dark"] vaadin-grid {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+[data-theme="dark"] vaadin-grid-cell {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-grid::part(header-cell) {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] vaadin-grid::part(row):hover {
+    background: var(--bg-tertiary);
+}
+
+/* Dialog styling for dark mode */
+[data-theme="dark"] vaadin-dialog-overlay {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] vaadin-dialog-overlay::part(overlay) {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-dialog-overlay::part(header) {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] vaadin-dialog-overlay::part(content) {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-dialog-overlay::part(footer) {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Status badges */
+.order-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.courier-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Form fields dark mode */
+[data-theme="dark"] vaadin-text-field,
+[data-theme="dark"] vaadin-number-field,
+[data-theme="dark"] vaadin-text-area,
+[data-theme="dark"] vaadin-combo-box,
+[data-theme="dark"] vaadin-email-field,
+[data-theme="dark"] vaadin-password-field {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-text-field::part(input-field),
+[data-theme="dark"] vaadin-number-field::part(input-field),
+[data-theme="dark"] vaadin-text-area::part(input-field),
+[data-theme="dark"] vaadin-combo-box::part(input-field),
+[data-theme="dark"] vaadin-email-field::part(input-field),
+[data-theme="dark"] vaadin-password-field::part(input-field) {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-text-field::part(label),
+[data-theme="dark"] vaadin-number-field::part(label),
+[data-theme="dark"] vaadin-text-area::part(label),
+[data-theme="dark"] vaadin-combo-box::part(label),
+[data-theme="dark"] vaadin-email-field::part(label),
+[data-theme="dark"] vaadin-password-field::part(label) {
+    color: var(--text-secondary);
+}
+
+/* Buttons dark mode */
+[data-theme="dark"] vaadin-button {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-button[theme~="primary"] {
+    background: var(--accent-color);
+    color: white;
+}
+
+[data-theme="dark"] vaadin-button[theme~="primary"]:hover {
+    background: var(--accent-hover);
+}
+
+/* Tabs dark mode */
+[data-theme="dark"] vaadin-tabs {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-tab {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] vaadin-tab[selected] {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+/* Review stats dark mode */
+[data-theme="dark"] .review-stats {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+/* H2, H3 headings dark mode */
+[data-theme="dark"] h2,
+[data-theme="dark"] h3 {
+    color: var(--text-primary);
+}
+
+/* Span text dark mode */
+[data-theme="dark"] span {
+    color: var(--text-primary);
+}
+
+/* ComboBox dropdown dark mode */
+[data-theme="dark"] vaadin-combo-box-overlay {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] vaadin-combo-box-item {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] vaadin-combo-box-item:hover {
+    background: var(--bg-tertiary);
+}
+
+/* Horizontal and Vertical Layout dark mode */
+[data-theme="dark"] vaadin-horizontal-layout,
+[data-theme="dark"] vaadin-vertical-layout {
+    color: var(--text-primary);
+}

@@ -13,5 +13,6 @@ public record OrderDto(
         Long userId,
         String userEmail,
         Long courierId,
-        String courierEmail
+        String courierEmail,
+        String courierFullName
 ) {}
