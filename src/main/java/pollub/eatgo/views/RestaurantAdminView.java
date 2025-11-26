@@ -38,6 +38,7 @@ import pollub.eatgo.service.AuthenticationService;
 import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.PdfService;
 import pollub.eatgo.service.RestaurantService;
+import pollub.eatgo.service.ReviewService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
