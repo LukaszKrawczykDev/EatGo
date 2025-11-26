@@ -133,5 +133,51 @@ class AddressServiceUnitTest {
         verify(addressRepository, times(1)).findByIdAndUserId(1L, 1L);
         verify(addressRepository, times(1)).delete(testAddress);
     }
+
+    // --- Nowe testy jednostkowe ---
+
+    @Test
+    void testAddAddress_UserNotFound_ShouldThrow() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> addressService.addAddress(1L, addressCreateDto));
+        verify(userRepository, times(1)).findById(1L);
+        verify(addressRepository, never()).save(any(Address.class));
+    }
+
+    @Test
+    void testUpdateAddress_AddressNotFound_ShouldThrow() {
+        // Given
+        when(addressRepository.findByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
+
+        AddressCreateDto updateDto = new AddressCreateDto(
+                "Gdańsk",
+                "Nowa 10",
+                "80-001",
+                "2"
+        );
+
+        // When & Then
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> addressService.updateAddress(1L, 99L, updateDto));
+        assertEquals("Adres nie znaleziony", ex.getMessage());
+        verify(addressRepository, times(1)).findByIdAndUserId(99L, 1L);
+        verify(addressRepository, never()).save(any(Address.class));
+    }
+
+    @Test
+    void testDeleteAddress_AddressNotFound_ShouldThrow() {
+        // Given
+        when(addressRepository.findByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> addressService.deleteAddress(1L, 99L));
+        assertEquals("Adres nie znaleziony", ex.getMessage());
+        verify(addressRepository, times(1)).findByIdAndUserId(99L, 1L);
+        verify(addressRepository, never()).delete(any(Address.class));
+    }
 }
 
