@@ -386,42 +386,44 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
     private Div createStatCard(String title, String value, VaadinIcon icon) {
         Div card = new Div();
         card.addClassName("stat-card");
-        card.getStyle().set("padding", "1rem");
+        card.getStyle().set("padding", "0.75rem 1rem");
         card.getStyle().set("border-radius", "8px");
         card.getStyle().set("background", "var(--bg-primary)");
         card.getStyle().set("border", "1px solid var(--border-color)");
         card.getStyle().set("box-shadow", "var(--shadow-sm)");
         card.getStyle().set("transition", "transform 0.2s, box-shadow 0.2s");
         card.getStyle().set("display", "flex");
-        card.getStyle().set("flex-direction", "column");
+        card.getStyle().set("flex-direction", "row");
+        card.getStyle().set("align-items", "center");
         card.getStyle().set("justify-content", "space-between");
-        card.getStyle().set("min-height", "90px");
         
-        Span titleSpan = new Span(title);
-        titleSpan.getStyle().set("font-size", "0.8rem");
-        titleSpan.getStyle().set("color", "var(--text-secondary)");
-        titleSpan.getStyle().set("display", "block");
-        titleSpan.getStyle().set("margin-bottom", "0.5rem");
-        titleSpan.getStyle().set("font-weight", "500");
-        
-        HorizontalLayout valueLayout = new HorizontalLayout();
-        valueLayout.setSpacing(true);
-        valueLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        valueLayout.getStyle().set("margin-top", "auto");
-        
-        Span valueSpan = new Span(value);
-        valueSpan.getStyle().set("font-size", "1.4rem");
-        valueSpan.getStyle().set("font-weight", "bold");
-        valueSpan.getStyle().set("color", "var(--text-primary)");
-        valueSpan.getStyle().set("line-height", "1.2");
+        HorizontalLayout leftSection = new HorizontalLayout();
+        leftSection.setSpacing(true);
+        leftSection.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+        leftSection.setPadding(false);
+        leftSection.getStyle().set("margin", "0");
         
         com.vaadin.flow.component.html.Span iconSpan = new com.vaadin.flow.component.html.Span();
         iconSpan.getElement().appendChild(icon.create().getElement());
         iconSpan.getStyle().set("font-size", "1.2rem");
         iconSpan.getStyle().set("opacity", "0.8");
         
-        valueLayout.add(iconSpan, valueSpan);
-        card.add(titleSpan, valueLayout);
+        Span titleSpan = new Span(title);
+        titleSpan.getStyle().set("font-size", "0.875rem");
+        titleSpan.getStyle().set("color", "var(--text-secondary)");
+        titleSpan.getStyle().set("font-weight", "500");
+        titleSpan.getStyle().set("white-space", "nowrap");
+        
+        leftSection.add(iconSpan, titleSpan);
+        
+        Span valueSpan = new Span(value);
+        valueSpan.getStyle().set("font-size", "1.25rem");
+        valueSpan.getStyle().set("font-weight", "bold");
+        valueSpan.getStyle().set("color", "var(--text-primary)");
+        valueSpan.getStyle().set("white-space", "nowrap");
+        valueSpan.getStyle().set("margin-left", "auto");
+        
+        card.add(leftSection, valueSpan);
         
         return card;
     }
