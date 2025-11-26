@@ -52,7 +52,7 @@ class AddressServiceIntegrationTest {
 
     @Test
     void testAddAddress_Integration() {
-        // Given
+
         AddressCreateDto dto = new AddressCreateDto(
                 "Warszawa",
                 "Testowa 1",
@@ -92,7 +92,6 @@ class AddressServiceIntegrationTest {
         // Then
         assertNotNull(result);
         assertEquals(2, result.size());
-        // Should be ordered by id desc (newest first)
         assertTrue(result.get(0).id() >= result.get(1).id());
     }
 
@@ -124,6 +123,51 @@ class AddressServiceIntegrationTest {
         Optional<Address> addressInDb = addressRepository.findById(updated.id());
         assertTrue(addressInDb.isPresent());
         assertEquals("Kraków", addressInDb.get().getCity());
+    }
+
+    @Test
+    void testDeleteAddress_Integration() {
+        // Given
+        AddressCreateDto dto = new AddressCreateDto("Warszawa", "Testowa 1", "00-001", "5");
+        AddressDto created = addressService.addAddress(testUser.getId(), dto);
+
+        // When
+        addressService.deleteAddress(testUser.getId(), created.id());
+
+        // Then
+        assertFalse(addressRepository.findById(created.id()).isPresent());
+    }
+
+    @Test
+    void testListAddresses_EmptyForUserWithoutAddresses() {
+        // When
+        List<AddressDto> result = addressService.listAddresses(testUser.getId());
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testUpdateAddress_WrongUser_ShouldThrow() {
+        // Given
+        AddressCreateDto dto = new AddressCreateDto("Warszawa", "Testowa 1", "00-001", "5");
+        AddressDto created = addressService.addAddress(testUser.getId(), dto);
+
+        User otherUser = User.builder()
+                .email("other@example.com")
+                .password("password456")
+                .fullName("Other User")
+                .role(User.Role.CLIENT)
+                .build();
+        otherUser = userRepository.save(otherUser);
+
+        AddressCreateDto updateDto = new AddressCreateDto("Gdańsk", "Nowa 2", "80-002", "7");
+
+        // When & Then
+        User finalOtherUser = otherUser;
+        assertThrows(RuntimeException.class,
+                () -> addressService.updateAddress(finalOtherUser.getId(), created.id(), updateDto));
     }
 }
 
