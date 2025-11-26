@@ -33,6 +33,7 @@ public class OrdersView extends VerticalLayout {
     private VerticalLayout activeOrdersContainer;
     private VerticalLayout completedOrdersContainer;
     private java.util.Map<Long, String> lastStatuses = new java.util.HashMap<>();
+    private java.util.Set<Long> shownDeliveredDialogs = new java.util.HashSet<>();
     private Long currentUserId;
     private com.vaadin.flow.component.dialog.Dialog deliveredDialog;
     
@@ -193,14 +194,29 @@ public class OrdersView extends VerticalLayout {
                     System.out.println("OrdersView: Parsed " + orders.size() + " orders");
 
                     // Wykryj przejście zamówienia w stan DELIVERED
+                    // Sprawdź czy któreś zamówienie właśnie zmieniło status na DELIVERED
+                    boolean isFirstLoad = lastStatuses.isEmpty();
+                    
                     for (OrderDto order : orders) {
                         String previous = lastStatuses.get(order.id());
                         String current = order.status();
-                        if (previous != null
+                        
+                        // Pokazuj modal tylko gdy:
+                        // 1. To nie jest pierwsze załadowanie (mamy poprzednie statusy)
+                        // 2. Poprzedni status nie był DELIVERED
+                        // 3. Aktualny status jest DELIVERED
+                        // 4. Modal dla tego zamówienia nie został jeszcze pokazany
+                        if (!isFirstLoad 
+                                && previous != null
                                 && !"DELIVERED".equalsIgnoreCase(previous)
-                                && "DELIVERED".equalsIgnoreCase(current)) {
+                                && "DELIVERED".equalsIgnoreCase(current)
+                                && !shownDeliveredDialogs.contains(order.id())) {
+                            System.out.println("OrdersView: Detected status change to DELIVERED for order #" + order.id());
+                            shownDeliveredDialogs.add(order.id()); // Oznacz, że modal został pokazany
                             showDeliveredDialog(order.id());
                         }
+                        
+                        // Zapamiętaj aktualny status dla następnego porównania
                         lastStatuses.put(order.id(), current);
                     }
                     

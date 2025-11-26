@@ -31,6 +31,7 @@ public class HeaderComponent extends Div {
     private Div loginButtonsContainer;
     private Span notificationsBadge;
     private Dialog notificationsDialog;
+    private java.util.concurrent.ScheduledExecutorService badgeRefreshExecutor;
     
     public HeaderComponent(AuthenticationService authService,
                            TokenValidationService tokenValidationService,
@@ -337,7 +338,14 @@ public class HeaderComponent extends Div {
         notificationsBadge.setVisible(false);
 
         if (parsedUserId != null) {
-            updateNotificationsBadge(parsedUserId);
+            // Opóźnij aktualizację badge, aby upewnić się, że komponent jest w pełni zrenderowany
+            getUI().ifPresent(ui -> {
+                ui.access(() -> {
+                    ui.getPage().executeJs("setTimeout(function() { $0.$server.refreshNotificationsBadge(); }, 200);", getElement());
+                });
+            });
+            // Uruchom okresowe odświeżanie badge co 3 sekundy
+            startBadgeRefreshTimer(parsedUserId);
         }
 
         // Kontener na dzwonek + badge
@@ -439,16 +447,70 @@ public class HeaderComponent extends Div {
     }
 
     private void updateNotificationsBadge(Long userId) {
-        if (notificationsBadge == null) {
+        if (notificationsBadge == null || userId == null) {
             return;
         }
-        long unread = orderNotificationService.countUnread(userId);
-        if (unread > 0) {
-            notificationsBadge.setText(String.valueOf(unread));
-            notificationsBadge.setVisible(true);
-        } else {
-            notificationsBadge.setVisible(false);
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                try {
+                    long unread = orderNotificationService.countUnread(userId);
+                    System.out.println("HeaderComponent: Unread notifications count for user " + userId + ": " + unread);
+                    if (unread > 0) {
+                        notificationsBadge.setText(String.valueOf(unread));
+                        notificationsBadge.setVisible(true);
+                        System.out.println("HeaderComponent: Badge set to visible with count: " + unread);
+                    } else {
+                        notificationsBadge.setVisible(false);
+                        System.out.println("HeaderComponent: Badge hidden (no unread notifications)");
+                    }
+                } catch (Exception e) {
+                    System.err.println("HeaderComponent: Error updating notifications badge: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    public void refreshNotificationsBadge() {
+        getElement().executeJs(
+            "const userId = localStorage.getItem('eatgo-userId'); " +
+            "if (userId && userId !== 'null' && userId !== '') { " +
+            "  try { " +
+            "    const parsed = parseInt(userId); " +
+            "    if (!isNaN(parsed)) { " +
+            "      $0.$server.updateNotificationsBadgeFromClient(parsed); " +
+            "    } " +
+            "  } catch(e) { " +
+            "    console.error('Error parsing userId:', e); " +
+            "  } " +
+            "}"
+        );
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    public void updateNotificationsBadgeFromClient(Long userId) {
+        updateNotificationsBadge(userId);
+    }
+    
+    private void startBadgeRefreshTimer(Long userId) {
+        // Zatrzymaj poprzedni timer jeśli istnieje
+        if (badgeRefreshExecutor != null) {
+            badgeRefreshExecutor.shutdown();
         }
+        
+        // Utwórz nowy executor dla okresowego odświeżania
+        badgeRefreshExecutor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+        badgeRefreshExecutor.scheduleAtFixedRate(
+            () -> {
+                getUI().ifPresent(ui -> {
+                    ui.access(() -> updateNotificationsBadge(userId));
+                });
+            },
+            3, // Opóźnienie startowe: 3 sekundy
+            3, // Okres: co 3 sekundy
+            java.util.concurrent.TimeUnit.SECONDS
+        );
     }
 
     private void openNotificationsDialog(Long userId) {
@@ -462,7 +524,13 @@ public class HeaderComponent extends Div {
             notificationsDialog.setResizable(false);
             
             // Przycisk zamykania (ikona X) w nagłówku dialogu
-            Button closeButton = new Button(VaadinIcon.CLOSE_SMALL.create(), event -> notificationsDialog.close());
+            Button closeButton = new Button(VaadinIcon.CLOSE_SMALL.create(), event -> {
+                notificationsDialog.close();
+                // Odśwież badge po zamknięciu dialogu
+                if (userId != null) {
+                    updateNotificationsBadge(userId);
+                }
+            });
             closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
             closeButton.getElement().getStyle().set("margin-left", "auto");
             notificationsDialog.getHeader().add(closeButton);
@@ -496,11 +564,21 @@ public class HeaderComponent extends Div {
         }
 
         notificationsDialog.add(layout);
+        
+        // Oznacz wszystkie jako przeczytane po otwarciu dialogu
+        notificationsDialog.addOpenedChangeListener(e -> {
+            if (e.isOpened() && userId != null) {
+                orderNotificationService.markAllAsRead(userId);
+                // Opóźnij aktualizację badge, aby upewnić się, że zmiany zostały zapisane
+                getUI().ifPresent(ui -> {
+                    ui.access(() -> {
+                        ui.getPage().executeJs("setTimeout(function() { $0.$server.updateNotificationsBadgeFromClient(" + userId + "); }, 100);", getElement());
+                    });
+                });
+            }
+        });
+        
         notificationsDialog.open();
-
-        // Oznacz wszystkie jako przeczytane i odśwież badge
-        orderNotificationService.markAllAsRead(userId);
-        updateNotificationsBadge(userId);
     }
     
     private void showCartsDialog() {
