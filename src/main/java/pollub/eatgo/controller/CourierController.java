@@ -15,6 +15,8 @@ import pollub.eatgo.model.OrderStatus;
 import pollub.eatgo.model.User;
 import pollub.eatgo.repository.OrderRepository;
 import pollub.eatgo.repository.UserRepository;
+import pollub.eatgo.service.OrderNotificationService;
+import pollub.eatgo.service.ReviewService;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -28,6 +30,8 @@ public class CourierController {
 
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
+	private final ReviewService reviewService;
+	private final OrderNotificationService orderNotificationService;
 
 	@GetMapping("/orders")
 	public List<OrderDetailsDto> listAssigned(Authentication auth) {
@@ -53,6 +57,7 @@ public class CourierController {
 		Order order = orderRepository.findByIdAndCourierId(id, courier.getId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
+		OrderStatus previousStatus = order.getStatus();
 		OrderStatus targetStatus;
 		try {
 			targetStatus = parseStatus(body.status());
@@ -64,6 +69,7 @@ public class CourierController {
 		}
 		order.setStatus(OrderStatus.DELIVERED);
 		order = orderRepository.save(order);
+		orderNotificationService.addStatusChangeNotification(order, previousStatus, OrderStatus.DELIVERED);
 		return ResponseEntity.ok(toOrderDto(order));
 	}
 
@@ -122,7 +128,7 @@ public class CourierController {
 					0
 			);
 		}
-		
+
 		return new OrderDetailsDto(
 				order.getId(),
 				order.getStatus() != null ? order.getStatus().name() : null,

@@ -40,6 +40,7 @@ public class RestaurantService {
     private final OrderRepository orderRepository;
     private final DishRepository dishRepository;
 	private final PasswordEncoder passwordEncoder;
+    private final OrderNotificationService orderNotificationService;
 
     // ----------------- ADMIN / RESTAURANT (protected endpoints) -----------------
 
@@ -56,6 +57,7 @@ public class RestaurantService {
         if (!order.getRestaurant().getId().equals(restaurant.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to your restaurant");
         }
+        OrderStatus previousStatus = order.getStatus();
         OrderStatus targetStatus = parseOrderStatus(status);
         validateAdminTransition(order.getStatus(), targetStatus);
         if (targetStatus == OrderStatus.IN_DELIVERY && order.getCourier() == null) {
@@ -63,6 +65,7 @@ public class RestaurantService {
         }
         order.setStatus(targetStatus);
         order = orderRepository.save(order);
+        orderNotificationService.addStatusChangeNotification(order, previousStatus, targetStatus);
         return toOrderDto(order);
     }
 
@@ -78,9 +81,12 @@ public class RestaurantService {
         }
         User courier = userRepository.findByIdAndRestaurantId(courierId, restaurant.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Courier not found for your restaurant"));
+        OrderStatus previousStatus = order.getStatus();
         order.setCourier(courier);
         order.setStatus(OrderStatus.IN_DELIVERY);
         order = orderRepository.save(order);
+        // Powiadom klienta, że zamówienie jest w drodze
+        orderNotificationService.addStatusChangeNotification(order, previousStatus, OrderStatus.IN_DELIVERY);
         return toOrderDto(order);
     }
 

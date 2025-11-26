@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import pollub.eatgo.dto.order.OrderDetailsDto;
 import pollub.eatgo.dto.order.OrderItemDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
@@ -30,7 +31,9 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
     private Long orderId;
     private Div contentContainer;
     
-    public OrderDetailsView(AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public OrderDetailsView(AuthenticationService authService,
+                            TokenValidationService tokenValidationService,
+                            OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         
@@ -43,7 +46,7 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         setSpacing(false);
         setPadding(false);
         
-        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         
         Div content = new Div();

@@ -18,6 +18,7 @@ import pollub.eatgo.dto.order.OrderDetailsDto;
 import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
@@ -37,7 +38,9 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
     private HorizontalLayout deliveredOrdersContainer;
     private Button refreshButton;
     
-    public CourierDashboardView(AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public CourierDashboardView(AuthenticationService authService,
+                                TokenValidationService tokenValidationService,
+                                OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         
@@ -52,7 +55,7 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         addClassName("courier-dashboard-view");
         getStyle().set("background-color", "var(--bg-secondary)");
         
-        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         
         Div content = new Div();

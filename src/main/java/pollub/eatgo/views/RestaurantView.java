@@ -14,6 +14,7 @@ import com.vaadin.flow.router.Route;
 import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
@@ -29,15 +30,20 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
     private final RestaurantService restaurantService;
     private final AuthenticationService authService;
     private final TokenValidationService tokenValidationService;
+    private final OrderNotificationService orderNotificationService;
     private Long restaurantId;
     private RestaurantSummaryDto restaurant;
     private List<DishDto> menu;
     private HeaderComponent headerComponent;
     
-    public RestaurantView(RestaurantService restaurantService, AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public RestaurantView(RestaurantService restaurantService,
+                          AuthenticationService authService,
+                          TokenValidationService tokenValidationService,
+                          OrderNotificationService orderNotificationService) {
         this.restaurantService = restaurantService;
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
+        this.orderNotificationService = orderNotificationService;
         
         setSizeFull();
         setSpacing(false);
@@ -84,7 +90,7 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
         System.out.println("RestaurantView.buildView: Starting build, menu size: " + (menu != null ? menu.size() : "null"));
         
         // Header
-        headerComponent = new HeaderComponent(authService, tokenValidationService);
+        headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         System.out.println("RestaurantView.buildView: Header added");
         

@@ -35,6 +35,7 @@ import pollub.eatgo.dto.dish.DishUpdateDto;
 import pollub.eatgo.dto.order.OrderDto;
 import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.PdfService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.service.TokenValidationService;
@@ -86,7 +87,9 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
     public RestaurantAdminView(AuthenticationService authService, 
                                RestaurantService restaurantService,
                                TokenValidationService tokenValidationService,
-                               PdfService pdfService) {
+                               PdfService pdfService,
+                               ReviewService reviewService,
+                               OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.restaurantService = restaurantService;
         this.tokenValidationService = tokenValidationService;
@@ -97,7 +100,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         setPadding(false);
         addClassName("restaurant-admin-view");
         
-        HeaderComponent header = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent header = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(header);
         
         createTabs();
@@ -176,7 +179,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         
         couriersTab = new Tab();
         couriersTab.add(VaadinIcon.TRUCK.create(), new Span("Kurierzy"));
-        
+
         statisticsTab = new Tab();
         statisticsTab.add(VaadinIcon.CHART_LINE.create(), new Span("Statystyki"));
         
@@ -1087,7 +1090,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             default -> "var(--lumo-contrast-5pct)";
         };
     }
-    
+
     
     private void exportOrdersToExcel() {
         try {

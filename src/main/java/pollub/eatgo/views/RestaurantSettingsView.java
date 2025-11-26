@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.dto.restaurant.RestaurantUpdateDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
@@ -39,7 +40,8 @@ public class RestaurantSettingsView extends VerticalLayout implements BeforeEnte
 
     public RestaurantSettingsView(AuthenticationService authService,
                                   RestaurantService restaurantService,
-                                  TokenValidationService tokenValidationService) {
+                                  TokenValidationService tokenValidationService,
+                                  OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.restaurantService = restaurantService;
         this.tokenValidationService = tokenValidationService;
@@ -49,7 +51,7 @@ public class RestaurantSettingsView extends VerticalLayout implements BeforeEnte
         setPadding(false);
         addClassName("restaurant-settings-view");
 
-        HeaderComponent header = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent header = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(header);
 
         Div content = new Div();

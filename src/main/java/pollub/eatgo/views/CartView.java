@@ -12,6 +12,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
@@ -29,7 +30,10 @@ public class CartView extends VerticalLayout {
     private final TokenValidationService tokenValidationService;
     private Div cartsContainer;
     
-    public CartView(RestaurantService restaurantService, AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public CartView(RestaurantService restaurantService,
+                    AuthenticationService authService,
+                    TokenValidationService tokenValidationService,
+                    OrderNotificationService orderNotificationService) {
         this.restaurantService = restaurantService;
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
@@ -39,7 +43,7 @@ public class CartView extends VerticalLayout {
         setPadding(false);
         addClassName("cart-view");
         
-        HeaderComponent header = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent header = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(header);
         
         add(createContent());

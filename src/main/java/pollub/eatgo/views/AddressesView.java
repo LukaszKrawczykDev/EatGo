@@ -18,6 +18,7 @@ import pollub.eatgo.dto.address.AddressCreateDto;
 import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.service.AddressService;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
@@ -34,7 +35,10 @@ public class AddressesView extends VerticalLayout {
     private Dialog addressDialog;
     private AddressDto editingAddress;
     
-    public AddressesView(AddressService addressService, AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public AddressesView(AddressService addressService,
+                         AuthenticationService authService,
+                         TokenValidationService tokenValidationService,
+                         OrderNotificationService orderNotificationService) {
         this.addressService = addressService;
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
@@ -43,7 +47,7 @@ public class AddressesView extends VerticalLayout {
         setSpacing(false);
         setPadding(false);
         
-        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         
         Div content = new Div();

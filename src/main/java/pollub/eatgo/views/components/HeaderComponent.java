@@ -2,8 +2,10 @@ package pollub.eatgo.views.components;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
@@ -11,8 +13,10 @@ import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.TokenValidationService;
 
 public class HeaderComponent extends Div {
@@ -21,13 +25,20 @@ public class HeaderComponent extends Div {
     private boolean isDarkMode = false;
     private final AuthenticationService authService;
     private final TokenValidationService tokenValidationService;
+    private final OrderNotificationService orderNotificationService;
     private HorizontalLayout headerActions;
     private Div userMenuContainer;
     private Div loginButtonsContainer;
+    private Span notificationsBadge;
+    private Dialog notificationsDialog;
+    private java.util.concurrent.ScheduledExecutorService badgeRefreshExecutor;
     
-    public HeaderComponent(AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public HeaderComponent(AuthenticationService authService,
+                           TokenValidationService tokenValidationService,
+                           OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
+        this.orderNotificationService = orderNotificationService;
         addClassName("home-header");
         setWidthFull();
         
@@ -305,13 +316,50 @@ public class HeaderComponent extends Div {
         userMenuContainer.removeAll();
         System.out.println("userMenuContainer cleared");
         
-        // Dodaj przycisk powiadomień (tylko ikona, bez tekstu)
+        // Parsuj userId do Long (jeśli możliwe)
+        Long parsedUserId = null;
+        try {
+            if (userId != null && !userId.isBlank()) {
+                parsedUserId = Long.parseLong(userId);
+            }
+        } catch (NumberFormatException ex) {
+            System.err.println("HeaderComponent: invalid userId format: " + userId);
+        }
+
+        // Przycisk powiadomień (dzwonek)
         Button notificationsButton = new Button(VaadinIcon.BELL.create());
         notificationsButton.addClassName("notifications-button");
         notificationsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
         notificationsButton.setTooltipText("Powiadomienia");
+
+        // Badge z liczbą nieprzeczytanych powiadomień
+        notificationsBadge = new Span();
+        notificationsBadge.addClassName("notifications-badge");
+        notificationsBadge.setVisible(false);
+
+        if (parsedUserId != null) {
+            // Opóźnij aktualizację badge, aby upewnić się, że komponent jest w pełni zrenderowany
+            getUI().ifPresent(ui -> {
+                ui.access(() -> {
+                    ui.getPage().executeJs("setTimeout(function() { $0.$server.refreshNotificationsBadge(); }, 200);", getElement());
+                });
+            });
+            // Uruchom okresowe odświeżanie badge co 3 sekundy
+            startBadgeRefreshTimer(parsedUserId);
+        }
+
+        // Kontener na dzwonek + badge
+        Div notificationsContainer = new Div();
+        notificationsContainer.addClassName("notifications-container");
+        notificationsContainer.add(notificationsButton, notificationsBadge);
+
+        Long finalParsedUserId = parsedUserId;
         notificationsButton.addClickListener(e -> {
-            Notification.show("Powiadomienia - w budowie", 2000, Notification.Position.TOP_CENTER);
+            if (finalParsedUserId != null) {
+                openNotificationsDialog(finalParsedUserId);
+            } else {
+                Notification.show("Brak powiązanego użytkownika dla powiadomień", 3000, Notification.Position.TOP_CENTER);
+            }
         });
         
         // Dodaj przycisk koszyków (wiele koszyków - jeden per restauracja)
@@ -368,7 +416,7 @@ public class HeaderComponent extends Div {
         logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
         
         // Dodaj elementy do kontenera w odpowiedniej kolejności
-        userMenuContainer.add(notificationsButton, cartContainer, userMenu);
+        userMenuContainer.add(notificationsContainer, cartContainer, userMenu);
         System.out.println("Elements added to userMenuContainer - children count: " + userMenuContainer.getChildren().count());
         
         // Wymuś odświeżenie UI
@@ -396,6 +444,141 @@ public class HeaderComponent extends Div {
                 badge.setVisible(false);
             }
         });
+    }
+
+    private void updateNotificationsBadge(Long userId) {
+        if (notificationsBadge == null || userId == null) {
+            return;
+        }
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                try {
+                    long unread = orderNotificationService.countUnread(userId);
+                    System.out.println("HeaderComponent: Unread notifications count for user " + userId + ": " + unread);
+                    if (unread > 0) {
+                        notificationsBadge.setText(String.valueOf(unread));
+                        notificationsBadge.setVisible(true);
+                        System.out.println("HeaderComponent: Badge set to visible with count: " + unread);
+                    } else {
+                        notificationsBadge.setVisible(false);
+                        System.out.println("HeaderComponent: Badge hidden (no unread notifications)");
+                    }
+                } catch (Exception e) {
+                    System.err.println("HeaderComponent: Error updating notifications badge: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    public void refreshNotificationsBadge() {
+        getElement().executeJs(
+            "const userId = localStorage.getItem('eatgo-userId'); " +
+            "if (userId && userId !== 'null' && userId !== '') { " +
+            "  try { " +
+            "    const parsed = parseInt(userId); " +
+            "    if (!isNaN(parsed)) { " +
+            "      $0.$server.updateNotificationsBadgeFromClient(parsed); " +
+            "    } " +
+            "  } catch(e) { " +
+            "    console.error('Error parsing userId:', e); " +
+            "  } " +
+            "}"
+        );
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    public void updateNotificationsBadgeFromClient(Long userId) {
+        updateNotificationsBadge(userId);
+    }
+    
+    private void startBadgeRefreshTimer(Long userId) {
+        // Zatrzymaj poprzedni timer jeśli istnieje
+        if (badgeRefreshExecutor != null) {
+            badgeRefreshExecutor.shutdown();
+        }
+        
+        // Utwórz nowy executor dla okresowego odświeżania
+        badgeRefreshExecutor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+        badgeRefreshExecutor.scheduleAtFixedRate(
+            () -> {
+                getUI().ifPresent(ui -> {
+                    ui.access(() -> updateNotificationsBadge(userId));
+                });
+            },
+            3, // Opóźnienie startowe: 3 sekundy
+            3, // Okres: co 3 sekundy
+            java.util.concurrent.TimeUnit.SECONDS
+        );
+    }
+
+    private void openNotificationsDialog(Long userId) {
+        var notifications = orderNotificationService.getNotificationsForUser(userId);
+
+        if (notificationsDialog == null) {
+            notificationsDialog = new Dialog();
+            notificationsDialog.setHeaderTitle("Powiadomienia");
+            notificationsDialog.setModal(false);
+            notificationsDialog.setDraggable(true);
+            notificationsDialog.setResizable(false);
+            
+            // Przycisk zamykania (ikona X) w nagłówku dialogu
+            Button closeButton = new Button(VaadinIcon.CLOSE_SMALL.create(), event -> {
+                notificationsDialog.close();
+                // Odśwież badge po zamknięciu dialogu
+                if (userId != null) {
+                    updateNotificationsBadge(userId);
+                }
+            });
+            closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+            closeButton.getElement().getStyle().set("margin-left", "auto");
+            notificationsDialog.getHeader().add(closeButton);
+        } else {
+            notificationsDialog.removeAll();
+        }
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(false);
+        layout.setSpacing(false);
+        layout.setWidthFull();
+
+        if (notifications.isEmpty()) {
+            Paragraph empty = new Paragraph("Brak powiadomień o zamówieniach.");
+            empty.getStyle().set("margin", "0.5rem 0");
+            layout.add(empty);
+        } else {
+            for (var n : notifications) {
+                Paragraph p = new Paragraph();
+                String text = String.format(
+                        "[%s] %s",
+                        n.createdAt() != null
+                                ? n.createdAt().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
+                                : "",
+                        n.message()
+                );
+                p.setText(text);
+                p.getStyle().set("margin", "0.25rem 0");
+                layout.add(p);
+            }
+        }
+
+        notificationsDialog.add(layout);
+        
+        // Oznacz wszystkie jako przeczytane po otwarciu dialogu
+        notificationsDialog.addOpenedChangeListener(e -> {
+            if (e.isOpened() && userId != null) {
+                orderNotificationService.markAllAsRead(userId);
+                // Opóźnij aktualizację badge, aby upewnić się, że zmiany zostały zapisane
+                getUI().ifPresent(ui -> {
+                    ui.access(() -> {
+                        ui.getPage().executeJs("setTimeout(function() { $0.$server.updateNotificationsBadgeFromClient(" + userId + "); }, 100);", getElement());
+                    });
+                });
+            }
+        });
+        
+        notificationsDialog.open();
     }
     
     private void showCartsDialog() {

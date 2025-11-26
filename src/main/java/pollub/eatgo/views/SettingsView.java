@@ -20,6 +20,7 @@ import com.vaadin.flow.router.Route;
 import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.service.AddressService;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
@@ -51,7 +52,10 @@ public class SettingsView extends VerticalLayout {
     private static final List<String> AVAILABLE_CITIES = Arrays.asList("Warszawa", "Lublin", "Rzeszów");
     private boolean isInitializing = false;
     
-    public SettingsView(AuthenticationService authService, TokenValidationService tokenValidationService, AddressService addressService) {
+    public SettingsView(AuthenticationService authService,
+                        TokenValidationService tokenValidationService,
+                        AddressService addressService,
+                        OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         this.addressService = addressService;
@@ -60,7 +64,7 @@ public class SettingsView extends VerticalLayout {
         setSpacing(false);
         setPadding(false);
         
-        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         
         Div content = new Div();
