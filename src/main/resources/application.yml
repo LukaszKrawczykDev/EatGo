@@ -1,8 +1,9 @@
 spring:
   datasource:
+    # URL będzie ustawiony przez DatabaseConfig bean
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/eatgo}
-    username: ${DATABASE_USERNAME:eatgo_user}
-    password: ${DATABASE_PASSWORD:eatgo_pass}
+    username: ${DATABASE_USERNAME:${PGUSER:eatgo_user}}
+    password: ${DATABASE_PASSWORD:${PGPASSWORD:eatgo_pass}}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000
@@ -21,9 +22,11 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   flyway:
     enabled: true
+    # Flyway użyje tego samego DataSource co Spring, więc nie trzeba ustawiać osobno
+    # Ale jeśli Railway używa DATABASE_URL, musimy go sparsować
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/eatgo}
-    user: ${DATABASE_USERNAME:eatgo_user}
-    password: ${DATABASE_PASSWORD:eatgo_pass}
+    user: ${DATABASE_USERNAME:${PGUSER:eatgo_user}}
+    password: ${DATABASE_PASSWORD:${PGPASSWORD:eatgo_pass}}
     locations: classpath:db/migration
     database-type: postgres
     baseline-on-migrate: true
@@ -37,6 +40,8 @@ logging:
     org.flywaydb: INFO
     org.springframework.jdbc: INFO
     org.springframework.boot: INFO
+    org.springframework.boot.autoconfigure.jdbc: DEBUG
     org.hibernate: WARN
     pollub.eatgo: INFO
+    pollub.eatgo.config: DEBUG
     root: INFO
