@@ -249,7 +249,9 @@ public class RestaurantService {
                         r.getName(),
                         r.getAddress(),
                         BigDecimal.valueOf(r.getDeliveryPrice()),
-                        r.getImageUrl()
+                        r.getImageUrl(),
+                        null,
+                        0
                 ))
                 .toList();
     }

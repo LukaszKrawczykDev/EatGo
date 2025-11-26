@@ -14,9 +14,7 @@ import pollub.eatgo.dto.dish.DishUpdateDto;
 import pollub.eatgo.dto.order.*;
 import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.dto.restaurant.RestaurantUpdateDto;
-import pollub.eatgo.dto.review.ReviewDto;
 import pollub.eatgo.service.RestaurantService;
-import pollub.eatgo.service.ReviewService;
 
 import java.util.List;
 
@@ -27,7 +25,6 @@ import java.util.List;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
-    private final ReviewService reviewService;
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderDto>> listOrders(Authentication auth) {
@@ -90,12 +87,6 @@ public class RestaurantController {
         String email = auth.getName();
         restaurantService.deleteCourier(email, id);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/reviews")
-    public ResponseEntity<List<ReviewDto>> listReviews(Authentication auth) {
-        String email = auth.getName();
-        return ResponseEntity.ok(reviewService.getReviewsForAdmin(email));
     }
 
     @PutMapping("/restaurant")

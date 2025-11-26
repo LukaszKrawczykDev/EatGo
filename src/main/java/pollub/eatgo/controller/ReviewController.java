@@ -25,6 +25,28 @@ public class ReviewController {
 		reviewService.addReview(userId, body);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
+
+	@GetMapping("/orders/{orderId}/status")
+	public pollub.eatgo.dto.review.OrderReviewStatusDto getOrderReviewStatus(
+			@PathVariable Long orderId, 
+			Authentication auth) {
+		Long userId = userRepository.findByEmail(auth.getName()).map(User::getId).orElseThrow();
+		return reviewService.getOrderReviewStatus(userId, orderId);
+	}
+
+	@GetMapping("/restaurants/{restaurantId}/can-review")
+	public ResponseEntity<java.util.Map<String, Object>> canReviewRestaurant(
+			@PathVariable Long restaurantId,
+			Authentication auth) {
+		Long userId = userRepository.findByEmail(auth.getName()).map(User::getId).orElseThrow();
+		Long orderId = reviewService.findReviewableOrderForRestaurant(userId, restaurantId);
+		
+		java.util.Map<String, Object> response = new java.util.HashMap<>();
+		response.put("canReview", orderId != null);
+		response.put("orderId", orderId);
+		
+		return ResponseEntity.ok(response);
+	}
 }
 
 

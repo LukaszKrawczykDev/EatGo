@@ -7,5 +7,7 @@ public record RestaurantSummaryDto(
         String name,
         String address,
         BigDecimal deliveryPrice,
-        String imageUrl
+        String imageUrl,
+        Double averageRating,
+        Integer reviewCount
 ) {}

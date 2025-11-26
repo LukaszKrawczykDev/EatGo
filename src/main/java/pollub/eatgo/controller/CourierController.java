@@ -10,13 +10,11 @@ import org.springframework.web.server.ResponseStatusException;
 import pollub.eatgo.dto.order.OrderDto;
 import pollub.eatgo.dto.order.OrderDetailsDto;
 import pollub.eatgo.dto.order.OrderStatusUpdateDto;
-import pollub.eatgo.dto.review.ReviewDto;
 import pollub.eatgo.model.Order;
 import pollub.eatgo.model.OrderStatus;
 import pollub.eatgo.model.User;
 import pollub.eatgo.repository.OrderRepository;
 import pollub.eatgo.repository.UserRepository;
-import pollub.eatgo.service.ReviewService;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -30,7 +28,6 @@ public class CourierController {
 
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
-	private final ReviewService reviewService;
 
 	@GetMapping("/orders")
 	public List<OrderDetailsDto> listAssigned(Authentication auth) {
@@ -46,12 +43,6 @@ public class CourierController {
 		Order order = orderRepository.findByIdAndCourierId(id, courier.getId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 		return toOrderDetailsDto(order);
-	}
-
-	@GetMapping("/reviews")
-	public List<ReviewDto> myReviews(Authentication auth) {
-		User courier = resolveCourier(auth);
-		return reviewService.getReviewsForCourier(courier.getId());
 	}
 
 	@PutMapping("/orders/{id}/status")
@@ -119,19 +110,26 @@ public class CourierController {
 	}
 
 	private OrderDetailsDto toOrderDetailsDto(Order order) {
+		pollub.eatgo.dto.restaurant.RestaurantSummaryDto restaurantDto = null;
+		if (order.getRestaurant() != null) {
+			restaurantDto = new pollub.eatgo.dto.restaurant.RestaurantSummaryDto(
+					order.getRestaurant().getId(),
+					order.getRestaurant().getName(),
+					order.getRestaurant().getAddress(),
+					BigDecimal.valueOf(order.getRestaurant().getDeliveryPrice()),
+					order.getRestaurant().getImageUrl(),
+					null,
+					0
+			);
+		}
+		
 		return new OrderDetailsDto(
 				order.getId(),
 				order.getStatus() != null ? order.getStatus().name() : null,
 				BigDecimal.valueOf(order.getTotalPrice()),
 				BigDecimal.valueOf(order.getDeliveryPrice()),
 				order.getCreatedAt() == null ? null : OffsetDateTime.from(order.getCreatedAt().atZone(java.time.ZoneId.systemDefault())),
-				order.getRestaurant() != null ? new pollub.eatgo.dto.restaurant.RestaurantSummaryDto(
-						order.getRestaurant().getId(),
-						order.getRestaurant().getName(),
-						order.getRestaurant().getAddress(),
-						BigDecimal.valueOf(order.getRestaurant().getDeliveryPrice()),
-						order.getRestaurant().getImageUrl()
-				) : null,
+				restaurantDto,
 				order.getItems() == null ? List.of() :
 						order.getItems().stream()
 								.map(oi -> new pollub.eatgo.dto.order.OrderItemDto(

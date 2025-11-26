@@ -30,7 +30,6 @@ import pollub.eatgo.dto.courier.CourierCreateDto;
 import pollub.eatgo.dto.courier.CourierDto;
 import pollub.eatgo.dto.courier.CourierUpdateDto;
 import pollub.eatgo.dto.dish.DishCreateDto;
-import pollub.eatgo.dto.review.ReviewDto;
 import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.dish.DishUpdateDto;
 import pollub.eatgo.dto.order.OrderDto;
@@ -38,7 +37,6 @@ import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.service.AuthenticationService;
 import pollub.eatgo.service.PdfService;
 import pollub.eatgo.service.RestaurantService;
-import pollub.eatgo.service.ReviewService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
@@ -63,7 +61,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
     private final RestaurantService restaurantService;
     private final TokenValidationService tokenValidationService;
     private final PdfService pdfService;
-    private final ReviewService reviewService;
     
     private Tabs tabs;
     private Div contentContainer;
@@ -72,14 +69,12 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
     private Tab ordersTab;
     private Tab dishesTab;
     private Tab couriersTab;
-    private Tab reviewsTab;
     private Tab statisticsTab;
     
     // Data
     private List<OrderDto> orders = new ArrayList<>();
     private List<DishDto> dishes = new ArrayList<>();
     private List<CourierDto> couriers = new ArrayList<>();
-    private List<ReviewDto> reviews = new ArrayList<>();
     private RestaurantDto restaurant;
     private String adminEmail;
     
@@ -87,18 +82,15 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
     private Grid<OrderDto> ordersGrid;
     private Grid<DishDto> dishesGrid;
     private Grid<CourierDto> couriersGrid;
-    private Grid<ReviewDto> reviewsGrid;
     
     public RestaurantAdminView(AuthenticationService authService, 
                                RestaurantService restaurantService,
                                TokenValidationService tokenValidationService,
-                               PdfService pdfService,
-                               ReviewService reviewService) {
+                               PdfService pdfService) {
         this.authService = authService;
         this.restaurantService = restaurantService;
         this.tokenValidationService = tokenValidationService;
         this.pdfService = pdfService;
-        this.reviewService = reviewService;
         
         setSizeFull();
         setSpacing(false);
@@ -185,13 +177,10 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         couriersTab = new Tab();
         couriersTab.add(VaadinIcon.TRUCK.create(), new Span("Kurierzy"));
         
-        reviewsTab = new Tab();
-        reviewsTab.add(VaadinIcon.STAR.create(), new Span("Recenzje"));
-        
         statisticsTab = new Tab();
         statisticsTab.add(VaadinIcon.CHART_LINE.create(), new Span("Statystyki"));
         
-        tabs.add(ordersTab, dishesTab, couriersTab, reviewsTab, statisticsTab);
+        tabs.add(ordersTab, dishesTab, couriersTab, statisticsTab);
         
         tabs.addSelectedChangeListener(e -> {
             Tab selected = e.getSelectedTab();
@@ -201,8 +190,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 showDishesTab();
             } else if (selected == couriersTab) {
                 showCouriersTab();
-            } else if (selected == reviewsTab) {
-                showReviewsTab();
             } else if (selected == statisticsTab) {
                 showStatisticsTab();
             }
@@ -226,7 +213,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             orders = restaurantService.listOrders(email);
             dishes = restaurantService.getAllDishesForAdmin(email);
             couriers = restaurantService.listCouriers(email);
-            reviews = reviewService.getReviewsForAdmin(email);
             restaurant = restaurantService.getRestaurantForAdmin(email);
         } catch (Exception e) {
             Notification.show("Błąd podczas ładowania danych: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER);
@@ -1102,78 +1088,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         };
     }
     
-    private void showReviewsTab() {
-        contentContainer.removeAll();
-        
-        VerticalLayout layout = new VerticalLayout();
-        layout.setSpacing(true);
-        layout.setPadding(true);
-        layout.setSizeFull();
-        
-        H2 title = new H2("Recenzje");
-        Button refreshBtn = new Button("Odśwież", VaadinIcon.REFRESH.create(), e -> {
-            loadRestaurantData();
-            showReviewsTab();
-        });
-        
-        // Calculate average rating
-        double avgRating = reviews.stream()
-            .mapToInt(ReviewDto::rating)
-            .average()
-            .orElse(0.0);
-        int reviewCount = reviews.size();
-        
-        Div statsDiv = new Div();
-        statsDiv.addClassName("review-stats");
-        statsDiv.getStyle().set("display", "flex");
-        statsDiv.getStyle().set("gap", "2rem");
-        statsDiv.getStyle().set("margin-bottom", "1rem");
-        statsDiv.getStyle().set("padding", "1rem");
-        statsDiv.getStyle().set("background", "var(--bg-primary)");
-        statsDiv.getStyle().set("border-radius", "8px");
-        statsDiv.getStyle().set("border", "1px solid var(--border-color)");
-        statsDiv.getStyle().set("box-shadow", "var(--shadow-sm)");
-        
-        Span avgRatingSpan = new Span(String.format("Średnia ocena: %.2f ⭐", avgRating));
-        avgRatingSpan.getStyle().set("font-size", "1.1rem");
-        avgRatingSpan.getStyle().set("font-weight", "bold");
-        avgRatingSpan.getStyle().set("color", "var(--text-primary)");
-        
-        Span countSpan = new Span("Liczba recenzji: " + reviewCount);
-        countSpan.getStyle().set("font-size", "1.1rem");
-        countSpan.getStyle().set("color", "var(--text-primary)");
-        
-        statsDiv.add(avgRatingSpan, countSpan);
-        
-        HorizontalLayout header = new HorizontalLayout(title, refreshBtn);
-        header.setWidthFull();
-        header.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
-        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        
-        reviewsGrid = new Grid<>(ReviewDto.class, false);
-        reviewsGrid.addColumn(ReviewDto::rating).setHeader("Ocena").setAutoWidth(true).setSortable(true)
-            .setRenderer(new ComponentRenderer<>(review -> {
-                Span ratingSpan = new Span();
-                ratingSpan.setText("⭐ ".repeat(review.rating()));
-                ratingSpan.getStyle().set("font-size", "1.2rem");
-                return ratingSpan;
-            }));
-        reviewsGrid.addColumn(ReviewDto::reviewerName).setHeader("Recenzent").setAutoWidth(true).setSortable(true);
-        reviewsGrid.addColumn(ReviewDto::comment).setHeader("Komentarz").setAutoWidth(true);
-        DateTimeFormatter reviewFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-        reviewsGrid.addColumn(r -> r.createdAt() != null ? r.createdAt().format(reviewFormatter) : "")
-                  .setHeader("Data").setAutoWidth(true).setSortable(true);
-        reviewsGrid.addColumn(r -> r.orderId() != null ? "#" + r.orderId() : "-")
-                  .setHeader("Zamówienie").setAutoWidth(true).setSortable(true);
-        
-        reviewsGrid.setItems(reviews);
-        reviewsGrid.setSizeFull();
-        
-        layout.add(header, statsDiv, reviewsGrid);
-        layout.setFlexGrow(1, reviewsGrid);
-        
-        contentContainer.add(layout);
-    }
     
     private void exportOrdersToExcel() {
         try {

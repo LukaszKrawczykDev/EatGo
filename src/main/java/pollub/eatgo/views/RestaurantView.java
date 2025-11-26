@@ -2,7 +2,6 @@ package pollub.eatgo.views;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -106,6 +105,7 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
             menuSectionDiv.setText("Brak dostępnych dań w menu.");
         }
         add(menuSectionDiv);
+        
         System.out.println("RestaurantView.buildView: Menu section added, total children: " + getChildren().count());
     }
     
@@ -321,5 +321,6 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
             }
         });
     }
+    
 }
 

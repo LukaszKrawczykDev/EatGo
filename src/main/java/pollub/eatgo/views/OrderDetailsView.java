@@ -349,6 +349,7 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         return container;
     }
     
+    
     private Div createInfoSection(String label, String value) {
         Div section = new Div();
         section.getStyle().set("margin", "0.5rem 0");

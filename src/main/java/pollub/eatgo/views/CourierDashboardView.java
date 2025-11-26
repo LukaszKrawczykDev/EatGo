@@ -3,15 +3,12 @@ package pollub.eatgo.views;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -20,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import pollub.eatgo.dto.order.OrderDetailsDto;
 import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
-import pollub.eatgo.dto.review.ReviewDto;
 import pollub.eatgo.service.AuthenticationService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
@@ -36,12 +32,9 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
     private final TokenValidationService tokenValidationService;
     private final ObjectMapper objectMapper;
     
-    private Tabs tabs;
     private Div ordersContent;
-    private Div reviewsContent;
     private HorizontalLayout activeOrdersContainer;
     private HorizontalLayout deliveredOrdersContainer;
-    private VerticalLayout reviewsContainer;
     private Button refreshButton;
     
     public CourierDashboardView(AuthenticationService authService, TokenValidationService tokenValidationService) {
@@ -69,38 +62,18 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         content.getStyle().set("padding", "2rem");
         content.getStyle().set("background-color", "var(--bg-secondary)");
         content.getStyle().set("min-height", "calc(100vh - 80px)");
+        content.getStyle().set("position", "relative");
         
-        // Tabs z przyciskiem odświeżania
-        HorizontalLayout tabsHeader = new HorizontalLayout();
-        tabsHeader.setWidthFull();
-        tabsHeader.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
-        tabsHeader.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        tabsHeader.setSpacing(true);
-        
-        Tab ordersTab = new Tab("Moje zamówienia");
-        Tab reviewsTab = new Tab("Moje oceny");
-        tabs = new Tabs(ordersTab, reviewsTab);
-        tabs.addClassName("courier-dashboard-tabs");
-        tabs.getStyle().set("flex-grow", "1");
-        tabs.addSelectedChangeListener(event -> {
-            if (event.getSelectedTab() == ordersTab) {
-                showOrdersContent();
-            } else if (event.getSelectedTab() == reviewsTab) {
-                showReviewsContent();
-            }
-        });
-        
+        // Przycisk odświeżania w prawym górnym rogu
         refreshButton = new Button("Odśwież", VaadinIcon.REFRESH.create());
         refreshButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        refreshButton.getStyle().set("position", "absolute");
+        refreshButton.getStyle().set("top", "2rem");
+        refreshButton.getStyle().set("right", "2rem");
         refreshButton.addClickListener(e -> {
-            if (ordersTab.isSelected()) {
-                loadOrders();
-            } else if (reviewsTab.isSelected()) {
-                loadReviews();
-            }
+            loadOrders();
         });
-        
-        tabsHeader.add(tabs, refreshButton);
+        content.add(refreshButton);
         
         // Orders content
         ordersContent = new Div();
@@ -154,38 +127,8 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         
         ordersContent.add(activeSection, deliveredSection);
         
-        // Reviews content
-        reviewsContent = new Div();
-        reviewsContent.addClassName("courier-reviews-content");
-        reviewsContent.setWidthFull();
-        reviewsContent.setVisible(false);
-        
-        Div reviewsSection = new Div();
-        reviewsSection.addClassName("courier-section");
-        H3 reviewsTitle = new H3("Twoje oceny");
-        reviewsTitle.addClassName("courier-section-title");
-        reviewsContainer = new VerticalLayout();
-        reviewsContainer.setSpacing(true);
-        reviewsContainer.setPadding(false);
-        reviewsContainer.setWidthFull();
-        reviewsSection.add(reviewsTitle, reviewsContainer);
-        
-        reviewsContent.add(reviewsSection);
-        
-        content.add(tabsHeader, ordersContent, reviewsContent);
+        content.add(ordersContent);
         add(content);
-    }
-    
-    private void showOrdersContent() {
-        ordersContent.setVisible(true);
-        reviewsContent.setVisible(false);
-        loadOrders();
-    }
-    
-    private void showReviewsContent() {
-        ordersContent.setVisible(false);
-        reviewsContent.setVisible(true);
-        loadReviews();
     }
     
     @Override
@@ -575,149 +518,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
                 Notification.show(message, 3000, Notification.Position.TOP_CENTER);
             });
         });
-    }
-    
-    private void loadReviews() {
-        try {
-            getElement().executeJs(
-                "const token = localStorage.getItem('eatgo-token'); " +
-                "if (!token) { " +
-                "  $0.$server.onError('Musisz być zalogowany, aby zobaczyć oceny'); " +
-                "  return; " +
-                "} " +
-                "fetch('/api/courier/reviews', { " +
-                "  headers: { 'Authorization': 'Bearer ' + token } " +
-                "}) " +
-                ".then(r => { " +
-                "  if (!r.ok) { " +
-                "    return r.text().then(text => { " +
-                "      throw new Error('HTTP ' + r.status + ': ' + (text || r.statusText)); " +
-                "    }); " +
-                "  } " +
-                "  return r.json(); " +
-                "}) " +
-                ".then(reviews => { " +
-                "  console.log('CourierDashboard: Loaded ' + reviews.length + ' reviews'); " +
-                "  $0.$server.displayReviews(JSON.stringify(reviews)); " +
-                "}) " +
-                ".catch(e => { " +
-                "  console.error('Error loading reviews:', e); " +
-                "  $0.$server.onError('Błąd podczas ładowania ocen: ' + e.message); " +
-                "});",
-                getElement()
-            );
-        } catch (Exception e) {
-            System.err.println("CourierDashboard: Error in loadReviews: " + e.getMessage());
-            e.printStackTrace();
-            getUI().ifPresent(ui -> {
-                ui.access(() -> {
-                    Notification.show("Błąd podczas ładowania ocen: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER);
-                });
-            });
-        }
-    }
-    
-    @com.vaadin.flow.component.ClientCallable
-    public void displayReviews(String reviewsJson) {
-        getUI().ifPresent(ui -> {
-            ui.access(() -> {
-                try {
-                    if (reviewsJson == null || reviewsJson.trim().isEmpty() || reviewsJson.equals("null")) {
-                        showEmptyReviewsState();
-                        return;
-                    }
-                    
-                    if (!reviewsJson.trim().startsWith("[")) {
-                        Notification.show("Błąd: Nieprawidłowy format danych", 3000, Notification.Position.TOP_CENTER);
-                        showEmptyReviewsState();
-                        return;
-                    }
-                    
-                    List<ReviewDto> reviews = objectMapper.readValue(reviewsJson, 
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, ReviewDto.class));
-                    
-                    reviewsContainer.removeAll();
-                    
-                    if (reviews.isEmpty()) {
-                        showEmptyReviewsState();
-                    } else {
-                        // Oblicz średnią ocenę
-                        double avgRating = reviews.stream()
-                            .mapToInt(ReviewDto::rating)
-                            .average()
-                            .orElse(0.0);
-                        
-                        // Wyświetl statystyki
-                        Div statsCard = new Div();
-                        statsCard.addClassName("reviews-stats-card");
-                        Span statsText = new Span("Średnia ocena: " + String.format("%.1f", avgRating) + " / 5.0 (" + reviews.size() + " " + (reviews.size() == 1 ? "ocena" : "ocen") + ")");
-                        statsText.addClassName("reviews-stats-text");
-                        statsCard.add(statsText);
-                        reviewsContainer.add(statsCard);
-                        
-                        // Wyświetl recenzje
-                        for (ReviewDto review : reviews) {
-                            reviewsContainer.add(createReviewCard(review));
-                        }
-                    }
-                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                    System.err.println("CourierDashboard: JSON parsing error: " + e.getMessage());
-                    e.printStackTrace();
-                    Notification.show("Błąd podczas parsowania danych ocen: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER);
-                    showEmptyReviewsState();
-                } catch (Exception e) {
-                    System.err.println("CourierDashboard: Error displaying reviews: " + e.getMessage());
-                    e.printStackTrace();
-                    Notification.show("Błąd podczas wyświetlania ocen: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER);
-                    showEmptyReviewsState();
-                }
-            });
-        });
-    }
-    
-    private void showEmptyReviewsState() {
-        reviewsContainer.removeAll();
-        Div emptyMsg = new Div();
-        emptyMsg.setText("Brak ocen");
-        emptyMsg.addClassName("empty-state-message");
-        reviewsContainer.add(emptyMsg);
-    }
-    
-    private Div createReviewCard(ReviewDto review) {
-        Div card = new Div();
-        card.addClassName("courier-review-card");
-        
-        VerticalLayout content = new VerticalLayout();
-        content.setSpacing(false);
-        content.setPadding(false);
-        
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
-        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        
-        Span reviewerName = new Span(review.reviewerName() != null ? review.reviewerName() : "Anonimowy");
-        reviewerName.addClassName("reviewer-name");
-        
-        Span ratingStars = new Span(String.format("%d/5", review.rating()));
-        ratingStars.addClassName("rating-stars");
-        
-        header.add(reviewerName, ratingStars);
-        
-        content.add(header);
-        
-        if (review.comment() != null && !review.comment().trim().isEmpty()) {
-            Span comment = new Span(review.comment());
-            comment.addClassName("review-comment");
-            content.add(comment);
-        }
-        
-        Span reviewDate = new Span(formatDate(review.createdAt()));
-        reviewDate.addClassName("review-date");
-        content.add(reviewDate);
-        
-        card.add(content);
-        return card;
     }
     
     private String getStatusLabel(String status) {
