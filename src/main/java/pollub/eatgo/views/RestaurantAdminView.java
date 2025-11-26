@@ -36,6 +36,7 @@ import pollub.eatgo.dto.dish.DishUpdateDto;
 import pollub.eatgo.dto.order.OrderDto;
 import pollub.eatgo.dto.restaurant.RestaurantDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.PdfService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.service.ReviewService;
@@ -93,7 +94,8 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                                RestaurantService restaurantService,
                                TokenValidationService tokenValidationService,
                                PdfService pdfService,
-                               ReviewService reviewService) {
+                               ReviewService reviewService,
+                               OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.restaurantService = restaurantService;
         this.tokenValidationService = tokenValidationService;
@@ -105,7 +107,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         setPadding(false);
         addClassName("restaurant-admin-view");
         
-        HeaderComponent header = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent header = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(header);
         
         createTabs();

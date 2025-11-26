@@ -104,6 +104,12 @@
   align-items: center;
 }
 
+.notifications-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .cart-button,
 .notifications-button {
   border-radius: 50%;
@@ -140,6 +146,24 @@
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid var(--bg-primary);
+}
+
+.notifications-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
   font-weight: 700;
   border: 2px solid var(--bg-primary);
 }

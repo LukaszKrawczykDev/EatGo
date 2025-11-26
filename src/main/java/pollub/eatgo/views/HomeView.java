@@ -51,7 +51,10 @@ public class HomeView extends VerticalLayout {
         "ITALIAN", "🍝"
     );
 
-    public HomeView(RestaurantService restaurantService, AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public HomeView(RestaurantService restaurantService,
+                    AuthenticationService authService,
+                    TokenValidationService tokenValidationService,
+                    pollub.eatgo.service.OrderNotificationService orderNotificationService) {
         this.restaurantService = restaurantService;
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
@@ -64,7 +67,7 @@ public class HomeView extends VerticalLayout {
         setPadding(false);
         addClassName("home-view");
         
-        headerComponent = new HeaderComponent(authService, tokenValidationService);
+        headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         add(createSearchSection());
         add(createCategoriesSection());

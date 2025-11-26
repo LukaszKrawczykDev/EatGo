@@ -15,6 +15,7 @@ import com.vaadin.flow.router.Route;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import pollub.eatgo.dto.order.OrderDto;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
 
@@ -27,13 +28,20 @@ public class OrdersView extends VerticalLayout {
     
     private final AuthenticationService authService;
     private final TokenValidationService tokenValidationService;
+    private final OrderNotificationService orderNotificationService;
     private final ObjectMapper objectMapper;
     private VerticalLayout activeOrdersContainer;
     private VerticalLayout completedOrdersContainer;
+    private java.util.Map<Long, String> lastStatuses = new java.util.HashMap<>();
+    private Long currentUserId;
+    private com.vaadin.flow.component.dialog.Dialog deliveredDialog;
     
-    public OrdersView(AuthenticationService authService, TokenValidationService tokenValidationService) {
+    public OrdersView(AuthenticationService authService,
+                      TokenValidationService tokenValidationService,
+                      OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
+        this.orderNotificationService = orderNotificationService;
         
         // Inicjalizacja ObjectMapper z obsługą dat Java 8
         this.objectMapper = new ObjectMapper();
@@ -44,7 +52,7 @@ public class OrdersView extends VerticalLayout {
         setSpacing(false);
         setPadding(false);
         
-        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         
         Div content = new Div();
@@ -86,12 +94,32 @@ public class OrdersView extends VerticalLayout {
     @Override
     protected void onAttach(com.vaadin.flow.component.AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        // Opóźnij ładowanie, aby upewnić się, że komponent jest w pełni zrenderowany
+        // Najpierw pobierz ID użytkownika z localStorage, potem załaduj zamówienia
         getUI().ifPresent(ui -> {
             ui.access(() -> {
-                ui.getPage().executeJs("setTimeout(function() { $0.$server.loadOrdersDelayed(); }, 100);", getElement());
+                ui.getPage().executeJs(
+                    "(function(el){" +
+                    "  const uid = localStorage.getItem('eatgo-userId');" +
+                    "  el.$server.onUserIdResolved(uid || '');" +
+                    "  setTimeout(function(){ el.$server.loadOrdersDelayed(); }, 100);" +
+                    "})(arguments[0]);",
+                    getElement()
+                );
             });
         });
+    }
+    
+    @com.vaadin.flow.component.ClientCallable
+    public void onUserIdResolved(String userId) {
+        if (userId == null || userId.isBlank()) {
+            this.currentUserId = null;
+            return;
+        }
+        try {
+            this.currentUserId = Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            this.currentUserId = null;
+        }
     }
     
     @com.vaadin.flow.component.ClientCallable
@@ -163,6 +191,18 @@ public class OrdersView extends VerticalLayout {
                         objectMapper.getTypeFactory().constructCollectionType(List.class, OrderDto.class));
                     
                     System.out.println("OrdersView: Parsed " + orders.size() + " orders");
+
+                    // Wykryj przejście zamówienia w stan DELIVERED
+                    for (OrderDto order : orders) {
+                        String previous = lastStatuses.get(order.id());
+                        String current = order.status();
+                        if (previous != null
+                                && !"DELIVERED".equalsIgnoreCase(previous)
+                                && "DELIVERED".equalsIgnoreCase(current)) {
+                            showDeliveredDialog(order.id());
+                        }
+                        lastStatuses.put(order.id(), current);
+                    }
                     
                     if (activeOrdersContainer == null || completedOrdersContainer == null) {
                         System.err.println("OrdersView: Containers are null!");
@@ -357,6 +397,39 @@ public class OrdersView extends VerticalLayout {
     private String formatDate(java.time.LocalDateTime dateTime) {
         if (dateTime == null) return "";
         return dateTime.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+    }
+
+    private void showDeliveredDialog(Long orderId) {
+        if (deliveredDialog == null) {
+            deliveredDialog = new com.vaadin.flow.component.dialog.Dialog();
+            deliveredDialog.setModal(true);
+            deliveredDialog.setDraggable(false);
+            deliveredDialog.setResizable(false);
+        } else {
+            deliveredDialog.removeAll();
+        }
+
+        com.vaadin.flow.component.html.H3 title = new com.vaadin.flow.component.html.H3(
+                "Zamówienie nr " + orderId + " zostało dostarczone");
+        com.vaadin.flow.component.html.Paragraph info = new com.vaadin.flow.component.html.Paragraph(
+                "Dziękujemy za skorzystanie z EatGo!");
+
+        com.vaadin.flow.component.button.Button ok = new com.vaadin.flow.component.button.Button("OK", e -> {
+            deliveredDialog.close();
+            if (currentUserId != null) {
+                orderNotificationService.clearForUser(currentUserId);
+            }
+        });
+        ok.addThemeVariants(com.vaadin.flow.component.button.ButtonVariant.LUMO_PRIMARY);
+
+        com.vaadin.flow.component.orderedlayout.VerticalLayout layout =
+                new com.vaadin.flow.component.orderedlayout.VerticalLayout(title, info, ok);
+        layout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+        layout.setPadding(true);
+        layout.setSpacing(true);
+
+        deliveredDialog.add(layout);
+        deliveredDialog.open();
     }
     
     @com.vaadin.flow.component.ClientCallable

@@ -23,6 +23,7 @@ import pollub.eatgo.dto.order.OrderItemRequestDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
 import pollub.eatgo.service.AddressService;
 import pollub.eatgo.service.AuthenticationService;
+import pollub.eatgo.service.OrderNotificationService;
 import pollub.eatgo.service.RestaurantService;
 import pollub.eatgo.service.TokenValidationService;
 import pollub.eatgo.views.components.HeaderComponent;
@@ -39,6 +40,7 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
     private final AuthenticationService authService;
     private final TokenValidationService tokenValidationService;
     private final AddressService addressService;
+    private final OrderNotificationService orderNotificationService;
     private Long restaurantId;
     private RestaurantSummaryDto restaurant;
     private Div itemsContainer;
@@ -49,11 +51,16 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
     private Dialog addressDialog; // Przechowuj referencję do dialogu
     private List<AddressDto> currentAddresses = new ArrayList<>(); // Aktualna lista adresów
     
-    public CheckoutView(RestaurantService restaurantService, AuthenticationService authService, TokenValidationService tokenValidationService, AddressService addressService) {
+    public CheckoutView(RestaurantService restaurantService,
+                        AuthenticationService authService,
+                        TokenValidationService tokenValidationService,
+                        AddressService addressService,
+                        OrderNotificationService orderNotificationService) {
         this.restaurantService = restaurantService;
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         this.addressService = addressService;
+        this.orderNotificationService = orderNotificationService;
         
         setSizeFull();
         setSpacing(false);
@@ -91,7 +98,7 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
     private void buildView() {
         removeAll();
         
-        HeaderComponent header = new HeaderComponent(authService, tokenValidationService);
+        HeaderComponent header = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(header);
         
         Div content = new Div();
