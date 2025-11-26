@@ -9,12 +9,10 @@ import pollub.eatgo.dto.address.AddressCreateDto;
 import pollub.eatgo.dto.address.AddressDto;
 import pollub.eatgo.dto.dish.DishDto;
 import pollub.eatgo.dto.restaurant.RestaurantSummaryDto;
-import pollub.eatgo.dto.review.ReviewDto;
 import pollub.eatgo.model.User;
 import pollub.eatgo.repository.UserRepository;
 import pollub.eatgo.service.AddressService;
 import pollub.eatgo.service.RestaurantService;
-import pollub.eatgo.service.ReviewService;
 
 import java.util.List;
 
@@ -26,7 +24,6 @@ public class ClientController {
     private final RestaurantService restaurantService;
     private final AddressService addressService;
     private final UserRepository userRepository;
-    private final ReviewService reviewService;
 
     @GetMapping("/restaurants")
     public List<RestaurantSummaryDto> getRestaurants() {
@@ -49,11 +46,6 @@ public class ClientController {
     public List<AddressDto> getAddresses(Authentication auth) {
         Long userId = getUserId(auth);
         return addressService.listAddresses(userId);
-    }
-
-    @GetMapping("/restaurants/{id}/reviews")
-    public List<ReviewDto> getRestaurantReviews(@PathVariable Long id) {
-        return reviewService.getReviewsForRestaurant(id);
     }
 
     private Long getUserId(Authentication auth) {

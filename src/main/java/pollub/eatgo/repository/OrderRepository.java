@@ -20,4 +20,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	long countByRestaurantIdAndCreatedAtAfter(Long restaurantId, LocalDateTime date);
 	long countByRestaurantIdAndStatusIn(Long restaurantId, List<OrderStatus> statuses);
 	boolean existsByCourierIdAndStatus(Long courierId, OrderStatus status);
+	List<Order> findByUserIdAndRestaurantIdAndStatus(Long userId, Long restaurantId, OrderStatus status);
 }

@@ -117,19 +117,27 @@ public class OrderService {
 	private OrderDetailsDto toOrderDetailsDto(Order order) {
 		List<OrderItemDto> items = order.getItems() == null ? List.of() :
 				order.getItems().stream().map(this::toOrderItemDto).collect(Collectors.toList());
+		
+		pollub.eatgo.dto.restaurant.RestaurantSummaryDto restaurantDto = null;
+		if (order.getRestaurant() != null) {
+			restaurantDto = new pollub.eatgo.dto.restaurant.RestaurantSummaryDto(
+					order.getRestaurant().getId(),
+					order.getRestaurant().getName(),
+					order.getRestaurant().getAddress(),
+					BigDecimal.valueOf(order.getRestaurant().getDeliveryPrice()),
+					order.getRestaurant().getImageUrl(),
+					null,
+					0
+			);
+		}
+		
 		return new OrderDetailsDto(
 				order.getId(),
 				order.getStatus() != null ? order.getStatus().name() : null,
 				BigDecimal.valueOf(order.getTotalPrice()),
 				BigDecimal.valueOf(order.getDeliveryPrice()),
 				order.getCreatedAt() == null ? null : OffsetDateTime.from(order.getCreatedAt().atZone(java.time.ZoneId.systemDefault())),
-				new pollub.eatgo.dto.restaurant.RestaurantSummaryDto(
-						order.getRestaurant().getId(),
-						order.getRestaurant().getName(),
-						order.getRestaurant().getAddress(),
-						BigDecimal.valueOf(order.getRestaurant().getDeliveryPrice()),
-						order.getRestaurant().getImageUrl()
-				),
+				restaurantDto,
 				items,
 				new pollub.eatgo.dto.address.AddressDto(
 						order.getAddress().getId(),

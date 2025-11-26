@@ -88,6 +88,45 @@ public class ReviewService {
 		return mapToDto(reviewRepository.findByTargetTypeAndTargetIdOrderByCreatedAtDesc("COURIER", courierId));
 	}
 
+	public pollub.eatgo.dto.review.OrderReviewStatusDto getOrderReviewStatus(Long userId, Long orderId) {
+		Order order = orderRepository.findByIdAndUserId(orderId, userId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found for user"));
+		
+		boolean restaurantReviewed = reviewRepository.existsByOrderIdAndReviewerIdAndTargetType(orderId, userId, "RESTAURANT");
+		boolean courierReviewed = order.getCourier() != null 
+				? reviewRepository.existsByOrderIdAndReviewerIdAndTargetType(orderId, userId, "COURIER")
+				: false;
+		
+		boolean canReviewRestaurant = order.getStatus() == OrderStatus.DELIVERED && !restaurantReviewed;
+		boolean canReviewCourier = order.getStatus() == OrderStatus.DELIVERED 
+				&& order.getCourier() != null 
+				&& !courierReviewed;
+		
+		return new pollub.eatgo.dto.review.OrderReviewStatusDto(
+				restaurantReviewed,
+				courierReviewed,
+				canReviewRestaurant,
+				canReviewCourier
+		);
+	}
+
+	public Long findReviewableOrderForRestaurant(Long userId, Long restaurantId) {
+		// Znajdź dostarczone zamówienia użytkownika dla tej restauracji
+		List<Order> deliveredOrders = orderRepository.findByUserIdAndRestaurantIdAndStatus(
+				userId, restaurantId, OrderStatus.DELIVERED);
+		
+		// Znajdź pierwsze zamówienie, dla którego nie ma jeszcze recenzji restauracji
+		for (Order order : deliveredOrders) {
+			boolean alreadyReviewed = reviewRepository.existsByOrderIdAndReviewerIdAndTargetType(
+					order.getId(), userId, "RESTAURANT");
+			if (!alreadyReviewed) {
+				return order.getId();
+			}
+		}
+		
+		return null; // Nie znaleziono zamówienia, które można ocenić
+	}
+
 	private List<ReviewDto> mapToDto(List<Review> reviews) {
 		return reviews.stream()
 				.map(r -> new ReviewDto(
