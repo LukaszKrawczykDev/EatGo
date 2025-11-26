@@ -48,8 +48,13 @@ public class HeaderComponent extends Div {
         
         Div logoContainer = new Div();
         logoContainer.addClassName("logo-container");
-        RouterLink logoLink = new RouterLink("", pollub.eatgo.views.HomeView.class);
+        
+        // Utwórz klikalny div zamiast RouterLink, aby móc dynamicznie przekierowywać
+        Div logoLink = new Div();
         logoLink.addClassName("logo-link");
+        logoLink.getStyle().set("cursor", "pointer");
+        logoLink.addClickListener(e -> navigateToHomeOrDashboard());
+        
         H1 logo = new H1("🍔 EatGo");
         logo.addClassName("logo");
         logoLink.add(logo);
@@ -326,7 +331,6 @@ public class HeaderComponent extends Div {
             System.err.println("HeaderComponent: invalid userId format: " + userId);
         }
 
-        // Przycisk powiadomień (dzwonek)
         Button notificationsButton = new Button(VaadinIcon.BELL.create());
         notificationsButton.addClassName("notifications-button");
         notificationsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
@@ -362,24 +366,6 @@ public class HeaderComponent extends Div {
             }
         });
         
-        // Dodaj przycisk koszyków (wiele koszyków - jeden per restauracja)
-        Button cartsButton = new Button(VaadinIcon.CART.create());
-        cartsButton.addClassName("cart-button");
-        cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
-        cartsButton.setTooltipText("Koszyki");
-        cartsButton.addClickListener(e -> {
-            getUI().ifPresent(ui -> ui.navigate("cart"));
-        });
-        
-        // Dodaj badge z liczbą aktywnych koszyków
-        Span cartsBadge = new Span("0");
-        cartsBadge.addClassName("cart-badge");
-        updateCartsBadge(cartsBadge);
-        
-        Div cartContainer = new Div();
-        cartContainer.addClassName("cart-container");
-        cartContainer.add(cartsButton, cartsBadge);
-        
         // MenuBar z rozwijanym menu "Profil"
         MenuBar userMenu = new MenuBar();
         userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
@@ -388,35 +374,92 @@ public class HeaderComponent extends Div {
         // Włącz otwieranie menu po najechaniu (hover)
         userMenu.getElement().setProperty("openOnHover", true);
         
-        // Główny item "Profil" z ikoną i tekstem
-        var profileItem = userMenu.addItem("Profil", e -> {
+        // Główny item menu - nazwa zależy od roli
+        String menuLabel = "CLIENT".equalsIgnoreCase(role) ? "Profil" : 
+                          "RESTAURANT_ADMIN".equalsIgnoreCase(role) ? "Restauracja" : "Profil";
+        
+        var profileItem = userMenu.addItem(menuLabel, e -> {
             // Kliknięcie na główny item - nie robi nic, tylko rozwija menu
         });
         profileItem.addComponentAsFirst(VaadinIcon.USER.create());
         
-        // Submenu dla "Profil" - wyświetla się po najechaniu
+        // Submenu - wyświetla się po najechaniu
         var profileSubMenu = profileItem.getSubMenu();
         
-        var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
-            Notification.show("Ustawienia - w budowie", 2000, Notification.Position.TOP_CENTER);
-        });
-        settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
+        // Menu różni się w zależności od roli
+        if ("CLIENT".equalsIgnoreCase(role)) {
+            // Menu dla klienta
+            // Dodaj przycisk koszyków (tylko dla klientów)
+            Button cartsButton = new Button(VaadinIcon.CART.create());
+            cartsButton.addClassName("cart-button");
+            cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+            cartsButton.setTooltipText("Koszyki");
+            cartsButton.addClickListener(e -> {
+                getUI().ifPresent(ui -> ui.navigate("cart"));
+            });
+            
+            // Dodaj badge z liczbą aktywnych koszyków
+            Span cartsBadge = new Span("0");
+            cartsBadge.addClassName("cart-badge");
+            updateCartsBadge(cartsBadge);
+            
+            Div cartContainer = new Div();
+            cartContainer.addClassName("cart-container");
+            cartContainer.add(cartsButton, cartsBadge);
+            
+            // Opcje menu dla klienta
+            var addressesSubItem = profileSubMenu.addItem("Adresy", e -> {
+                getUI().ifPresent(ui -> ui.navigate("addresses"));
+            });
+            addressesSubItem.addComponentAsFirst(VaadinIcon.MAP_MARKER.create());
+            
+            var ordersSubItem = profileSubMenu.addItem("Zamówienia", e -> {
+                getUI().ifPresent(ui -> ui.navigate("orders"));
+            });
+            ordersSubItem.addComponentAsFirst(VaadinIcon.LIST.create());
+            
+            var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
+            logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
+            
+            // Dodaj elementy do kontenera w odpowiedniej kolejności
+            userMenuContainer.add(notificationsContainer, cartContainer, userMenu);
+        } else if ("RESTAURANT_ADMIN".equalsIgnoreCase(role)) {
+            // Menu dla administratora restauracji
+            var dashboardSubItem = profileSubMenu.addItem("Panel restauracji", e -> {
+                getUI().ifPresent(ui -> ui.navigate("restaurant"));
+            });
+            dashboardSubItem.addComponentAsFirst(VaadinIcon.HOME.create());
+            
+            var settingsSubItem = profileSubMenu.addItem("Ustawienia", e -> {
+                getUI().ifPresent(ui -> ui.navigate("restaurant/settings"));
+            });
+            settingsSubItem.addComponentAsFirst(VaadinIcon.COG.create());
+            
+            var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
+            logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
+            
+            // Dodaj elementy do kontenera (bez koszyka)
+            userMenuContainer.add(notificationsContainer, userMenu);
+        } else if ("COURIER".equalsIgnoreCase(role)) {
+            // Menu dla kuriera
+            var dashboardSubItem = profileSubMenu.addItem("Panel kuriera", e -> {
+                getUI().ifPresent(ui -> ui.navigate("courier"));
+            });
+            dashboardSubItem.addComponentAsFirst(VaadinIcon.TRUCK.create());
+            
+            var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
+            logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
+            
+            // Dodaj elementy do kontenera (bez koszyka)
+            userMenuContainer.add(notificationsContainer, userMenu);
+        } else {
+            // Domyślne menu (fallback)
+            var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
+            logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
+            
+            userMenuContainer.add(notificationsContainer, userMenu);
+        }
         
-        var addressesSubItem = profileSubMenu.addItem("Adresy", e -> {
-            getUI().ifPresent(ui -> ui.navigate("addresses"));
-        });
-        addressesSubItem.addComponentAsFirst(VaadinIcon.MAP_MARKER.create());
-        
-        var ordersSubItem = profileSubMenu.addItem("Zamówienia", e -> {
-            getUI().ifPresent(ui -> ui.navigate("orders"));
-        });
-        ordersSubItem.addComponentAsFirst(VaadinIcon.LIST.create());
-        
-        var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
-        logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
-        
-        // Dodaj elementy do kontenera w odpowiedniej kolejności
-        userMenuContainer.add(notificationsContainer, cartContainer, userMenu);
         System.out.println("Elements added to userMenuContainer - children count: " + userMenuContainer.getChildren().count());
         
         // Wymuś odświeżenie UI
@@ -476,21 +519,21 @@ public class HeaderComponent extends Div {
         getElement().executeJs(
             "const userId = localStorage.getItem('eatgo-userId'); " +
             "if (userId && userId !== 'null' && userId !== '') { " +
-            "  try { " +
-            "    const parsed = parseInt(userId); " +
-            "    if (!isNaN(parsed)) { " +
-            "      $0.$server.updateNotificationsBadgeFromClient(parsed); " +
-            "    } " +
-            "  } catch(e) { " +
-            "    console.error('Error parsing userId:', e); " +
-            "  } " +
+            "  $0.$server.updateNotificationsBadgeFromClient(userId); " +
             "}"
         );
     }
     
     @com.vaadin.flow.component.ClientCallable
-    public void updateNotificationsBadgeFromClient(Long userId) {
-        updateNotificationsBadge(userId);
+    public void updateNotificationsBadgeFromClient(String userIdStr) {
+        try {
+            if (userIdStr != null && !userIdStr.isEmpty()) {
+                Long userId = Long.parseLong(userIdStr);
+                updateNotificationsBadge(userId);
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("HeaderComponent: Invalid userId format: " + userIdStr);
+        }
     }
     
     private void startBadgeRefreshTimer(Long userId) {
@@ -571,9 +614,9 @@ public class HeaderComponent extends Div {
                 orderNotificationService.markAllAsRead(userId);
                 // Opóźnij aktualizację badge, aby upewnić się, że zmiany zostały zapisane
                 getUI().ifPresent(ui -> {
-                    ui.access(() -> {
-                        ui.getPage().executeJs("setTimeout(function() { $0.$server.updateNotificationsBadgeFromClient(" + userId + "); }, 100);", getElement());
-                    });
+                ui.access(() -> {
+                    ui.getPage().executeJs("setTimeout(function() { $0.$server.updateNotificationsBadgeFromClient('" + userId + "'); }, 100);", getElement());
+                });
                 });
             }
         });
@@ -657,6 +700,19 @@ public class HeaderComponent extends Div {
             themeToggle.setIcon(VaadinIcon.MOON_O.create());
             themeToggle.setAriaLabel("Przełącz na tryb ciemny");
         }
+    }
+    
+    private void navigateToHomeOrDashboard() {
+        getElement().executeJs(
+            "const role = localStorage.getItem('eatgo-role'); " +
+            "if (role === 'RESTAURANT_ADMIN') { " +
+            "  window.location.href = '/restaurant'; " +
+            "} else if (role === 'COURIER') { " +
+            "  window.location.href = '/courier'; " +
+            "} else { " +
+            "  window.location.href = '/'; " +
+            "}"
+        );
     }
 }
 
