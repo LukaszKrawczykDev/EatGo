@@ -30,9 +30,9 @@ public class Dish {
     @Builder.Default
     private boolean available = true;
 
-    private String category; // PIZZA, BURGER, SUSHI, ASIAN, MEXICAN, ITALIAN, etc.
+    private String category;
 
-    private String imageUrl; // URL do zdjęcia dania
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")

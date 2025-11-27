@@ -75,17 +75,13 @@ public class SettingsView extends VerticalLayout {
         
         H2 title = new H2("Ustawienia");
         title.addClassName("settings-title");
-        
-        // Sekcja zmiany hasła
+
         Div passwordSection = createPasswordSection();
-        
-        // Sekcja domyślnego adresu dostawy
+
         Div defaultAddressSection = createDefaultAddressSection();
-        
-        // Sekcja domyślnego miasta
+
         Div defaultCitySection = createDefaultCitySection();
-        
-        // Sekcja motywu
+
         Div themeSection = createThemeSection();
         
         content.add(title, passwordSection, defaultAddressSection, defaultCitySection, themeSection);
@@ -96,8 +92,7 @@ public class SettingsView extends VerticalLayout {
     
     private void loadSettings() {
         isInitializing = true;
-        
-        // Załaduj adresy użytkownika
+
         getElement().executeJs(
             "const userId = localStorage.getItem('eatgo-userId'); " +
             "if (userId) { " +
@@ -105,8 +100,7 @@ public class SettingsView extends VerticalLayout {
             "}",
             getElement()
         );
-        
-        // Załaduj ustawienia z API
+
         getElement().executeJs(
             "const token = localStorage.getItem('eatgo-token'); " +
             "if (!token) { " +
@@ -145,16 +139,14 @@ public class SettingsView extends VerticalLayout {
                 try {
                     com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                     com.fasterxml.jackson.databind.JsonNode settings = mapper.readTree(settingsJson);
-                    
-                    // Załaduj domyślne miasto
+
                     if (settings.has("defaultCity") && !settings.get("defaultCity").isNull()) {
                         String city = settings.get("defaultCity").asText();
                         if (defaultCityComboBox != null && AVAILABLE_CITIES.contains(city)) {
                             defaultCityComboBox.setValue(city);
                         }
                     }
-                    
-                    // Załaduj domyślny adres
+
                     if (settings.has("defaultAddressId") && !settings.get("defaultAddressId").isNull()) {
                         Long addressId = settings.get("defaultAddressId").asLong();
                         if (defaultAddressComboBox != null) {
@@ -164,16 +156,14 @@ public class SettingsView extends VerticalLayout {
                                 .ifPresent(defaultAddressComboBox::setValue);
                         }
                     }
-                    
-                    // Załaduj motyw
+
                     String theme = settings.has("theme") && !settings.get("theme").isNull() 
                         ? settings.get("theme").asText() 
                         : "light";
                     if (themeRadioGroup != null && (theme.equals("light") || theme.equals("dark"))) {
                         themeRadioGroup.setValue(theme);
                     }
-                    
-                    // Zaktualizuj localStorage dla kompatybilności z HeaderComponent
+
                     getElement().executeJs(
                         "if ($0) localStorage.setItem('eatgo-theme', $0);",
                         theme
@@ -183,7 +173,6 @@ public class SettingsView extends VerticalLayout {
                     System.err.println("SettingsView: Error parsing settings: " + e.getMessage());
                     e.printStackTrace();
                 } finally {
-                    // Po załadowaniu wszystkich wartości, wyłącz flagę inicjalizacji
                     getUI().ifPresent(u -> {
                         u.getPage().executeJs("setTimeout(function() { $0.$server.setInitializationComplete(); }, 200);", getElement());
                     });
@@ -245,8 +234,7 @@ public class SettingsView extends VerticalLayout {
         newPasswordField.setRequired(true);
         newPasswordField.setValueChangeMode(ValueChangeMode.EAGER);
         newPasswordField.addValueChangeListener(e -> updatePasswordStrength(e.getValue()));
-        
-        // Wskaźnik siły hasła
+
         passwordStrengthIndicator = new Div();
         passwordStrengthIndicator.addClassName("password-strength-indicator");
         passwordStrengthIndicator.setVisible(false);
@@ -254,8 +242,7 @@ public class SettingsView extends VerticalLayout {
         passwordStrengthBar = new ProgressBar(0, 4);
         passwordStrengthBar.setWidthFull();
         passwordStrengthBar.addClassName("password-strength-bar");
-        
-        // Wymagania hasła
+
         passwordRequirements = new Div();
         passwordRequirements.addClassName("password-requirements");
         passwordRequirements.getStyle().set("font-size", "0.875rem");
@@ -396,7 +383,6 @@ public class SettingsView extends VerticalLayout {
         themeRadioGroup = new RadioButtonGroup<>();
         themeRadioGroup.setItems("light", "dark");
         themeRadioGroup.setLabel("Wybierz motyw");
-        // Ustaw etykiety dla opcji
         themeRadioGroup.setItemLabelGenerator(item -> item.equals("light") ? "Jasny" : "Ciemny");
         themeRadioGroup.addValueChangeListener(e -> {
             if (e.getValue() != null && !isInitializing) {
@@ -421,8 +407,7 @@ public class SettingsView extends VerticalLayout {
         String oldPassword = oldPasswordField.getValue();
         String newPassword = newPasswordField.getValue();
         String confirmPassword = confirmPasswordField.getValue();
-        
-        // Walidacja
+
         if (oldPassword == null || oldPassword.trim().isEmpty()) {
             Notification.show("Wprowadź obecne hasło", 3000, Notification.Position.TOP_CENTER);
             oldPasswordField.focus();
@@ -434,8 +419,7 @@ public class SettingsView extends VerticalLayout {
             newPasswordField.focus();
             return;
         }
-        
-        // Walidacja siły hasła
+
         int strength = calculatePasswordStrength(newPassword);
         if (strength < 2) {
             Notification.show("Hasło jest zbyt słabe. Upewnij się, że spełnia wszystkie wymagania.", 5000, Notification.Position.TOP_CENTER);
@@ -454,8 +438,7 @@ public class SettingsView extends VerticalLayout {
             confirmPasswordField.focus();
             return;
         }
-        
-        // Wyślij żądanie zmiany hasła
+
         getElement().executeJs(
             "const token = localStorage.getItem('eatgo-token'); " +
             "if (!token) { " +
@@ -527,7 +510,6 @@ public class SettingsView extends VerticalLayout {
     }
     
     private void saveSettings(String city, Long addressId, String theme) {
-        // Pobierz aktualne wartości z UI
         String finalCity = city != null ? city : (defaultCityComboBox.getValue() != null ? defaultCityComboBox.getValue() : null);
         Long finalAddressId = addressId != null ? addressId : (defaultAddressComboBox.getValue() != null ? defaultAddressComboBox.getValue().id() : null);
         String finalTheme = theme != null ? theme : (themeRadioGroup.getValue() != null ? themeRadioGroup.getValue() : "light");
@@ -589,7 +571,6 @@ public class SettingsView extends VerticalLayout {
                 if (!isInitializing) {
                     if (isThemeChange) {
                         Notification.show("Motyw został zapisany", 2000, Notification.Position.TOP_CENTER);
-                        // Odśwież stronę, aby zastosować nowy motyw
                         ui.getPage().executeJs("setTimeout(function() { window.location.reload(); }, 500);");
                     } else {
                         Notification.show("Ustawienia zostały zapisane", 2000, Notification.Position.TOP_CENTER);
@@ -611,8 +592,7 @@ public class SettingsView extends VerticalLayout {
         
         int strength = calculatePasswordStrength(password);
         passwordStrengthBar.setValue(strength);
-        
-        // Aktualizuj kolor i tekst
+
         String strengthText;
         String strengthClass;
         
@@ -641,19 +621,16 @@ public class SettingsView extends VerticalLayout {
         Span strengthLabel = new Span("Siła hasła: " + strengthText);
         strengthLabel.addClassName("strength-label");
         passwordStrengthIndicator.add(strengthLabel, passwordStrengthBar);
-        
-        // Aktualizuj wymagania
+
         updatePasswordRequirements(password);
     }
     
     private int calculatePasswordStrength(String password) {
         int strength = 0;
-        
-        // Długość
+
         if (password.length() >= MIN_PASSWORD_LENGTH) strength++;
         if (password.length() >= 12) strength++;
-        
-        // Różnorodność znaków
+
         boolean hasUpper = password.matches(".*[A-Z].*");
         boolean hasLower = password.matches(".*[a-z].*");
         boolean hasDigit = password.matches(".*[0-9].*");
@@ -668,7 +645,6 @@ public class SettingsView extends VerticalLayout {
     
     private void updatePasswordRequirements(String password) {
         if (password == null || password.isEmpty()) {
-            // Reset wszystkich wymagań
             updateRequirementStatus("req-length", false);
             updateRequirementStatus("req-upper", false);
             updateRequirementStatus("req-lower", false);

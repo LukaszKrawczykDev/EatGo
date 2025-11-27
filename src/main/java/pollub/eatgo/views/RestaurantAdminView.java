@@ -66,21 +66,18 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
     
     private Tabs tabs;
     private Div contentContainer;
-    
-    // Tabs
+
     private Tab ordersTab;
     private Tab dishesTab;
     private Tab couriersTab;
     private Tab statisticsTab;
-    
-    // Data
+
     private List<OrderDto> orders = new ArrayList<>();
     private List<DishDto> dishes = new ArrayList<>();
     private List<CourierDto> couriers = new ArrayList<>();
     private RestaurantDto restaurant;
     private String adminEmail;
-    
-    // Grids
+
     private Grid<OrderDto> ordersGrid;
     private Grid<DishDto> dishesGrid;
     private Grid<CourierDto> couriersGrid;
@@ -108,8 +105,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         createContentContainer();
         
         add(tabs, contentContainer);
-        
-        // Load email from token
+
         loadAdminEmail();
     }
     
@@ -155,14 +151,12 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         if (adminEmail != null) {
             return adminEmail;
         }
-        // Try to get from SecurityContext as fallback
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getName() != null) {
                 return auth.getName();
             }
         } catch (Exception e) {
-            // Ignore
         }
         return null;
     }
@@ -230,14 +224,12 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         layout.setSpacing(true);
         layout.setPadding(true);
         layout.setSizeFull();
-        
-        // Statistics cards
+
         Div statsContainer = createStatisticsCards();
         layout.add(statsContainer);
         
         H2 title = new H2("Zamówienia");
-        
-        // Filter ComboBox
+
         ComboBox<String> filterCombo = new ComboBox<>("Filtruj status");
         filterCombo.setItems("Wszystkie", "W toku", "Zakończone", "Anulowane");
         filterCombo.setValue("Wszystkie");
@@ -314,8 +306,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             
             return actions;
         })).setHeader("Akcje").setAutoWidth(true);
-        
-        // Apply filter
+
         filterCombo.addValueChangeListener(e -> {
             String filter = e.getValue();
             List<OrderDto> filtered = orders;
@@ -377,7 +368,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 }
             }
         } catch (Exception e) {
-            // Ignore errors in stats
         }
         
         return statsContainer;
@@ -443,8 +433,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             loadRestaurantData();
             showDishesTab();
         });
-        
-        // Search and filter for dishes
+
         TextField dishSearchField = new TextField();
         dishSearchField.setPlaceholder("Szukaj dania...");
         dishSearchField.setWidth("250px");
@@ -505,8 +494,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             actions.add(editBtn, deleteBtn);
             return actions;
         })).setHeader("Akcje").setAutoWidth(true);
-        
-        // Apply filters for dishes
+
         Runnable updateDishesGrid = () -> {
             String search = dishSearchField.getValue();
             String category = categoryFilter.getValue();
@@ -566,8 +554,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             loadRestaurantData();
             showCouriersTab();
         });
-        
-        // Filter ComboBox
+
         ComboBox<String> filterCombo = new ComboBox<>("Filtruj status");
         filterCombo.setItems("Wszyscy", "Dostępni", "W trakcie dostawy");
         filterCombo.setValue("Wszyscy");
@@ -582,7 +569,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         couriersGrid.addColumn(CourierDto::email).setHeader("Email").setAutoWidth(true);
         couriersGrid.addColumn(CourierDto::fullName).setHeader("Imię i nazwisko").setAutoWidth(true);
         couriersGrid.addColumn(new ComponentRenderer<>(courier -> {
-            // Policz aktywne dostawy dla kuriera
             long activeDeliveries = orders.stream()
                 .filter(o -> o.courierId() != null && o.courierId().equals(courier.id()) && "IN_DELIVERY".equals(o.status()))
                 .count();
@@ -615,15 +601,13 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             actions.add(editBtn, deleteBtn);
             return actions;
         })).setHeader("Akcje").setAutoWidth(true);
-        
-        // Apply filter
+
         filterCombo.addValueChangeListener(e -> {
             String filter = e.getValue();
             List<CourierDto> filtered = couriers;
             if (filter != null) {
                 switch (filter) {
                     case "Dostępni":
-                        // Kurierzy bez aktywnych dostaw
                         filtered = couriers.stream()
                             .filter(c -> {
                                 long activeDeliveries = orders.stream()
@@ -634,7 +618,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                             .collect(Collectors.toList());
                         break;
                     case "W trakcie dostawy":
-                        // Kurierzy z aktywnymi dostawami
                         filtered = couriers.stream()
                             .filter(c -> {
                                 long activeDeliveries = orders.stream()
@@ -697,8 +680,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Przypisz kuriera do zamówienia #" + order.id());
         dialog.setModal(true);
-        
-        // Pokaż wszystkich kurierów - kurier może mieć wiele zamówień jednocześnie
+
         if (couriers.isEmpty()) {
             VerticalLayout content = new VerticalLayout();
             content.setSpacing(true);
@@ -713,7 +695,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         ComboBox<CourierDto> courierCombo = new ComboBox<>("Wybierz kuriera");
         courierCombo.setItems(couriers);
         courierCombo.setItemLabelGenerator(c -> {
-            // Policz aktywne dostawy dla kuriera
             long activeDeliveries = orders.stream()
                 .filter(o -> o.courierId() != null && o.courierId().equals(c.id()) && "IN_DELIVERY".equals(o.status()))
                 .count();
@@ -888,7 +869,6 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             resource.setContentType("application/pdf");
             
             getUI().ifPresent(ui -> {
-                // Register the resource and get its URL
                 com.vaadin.flow.server.StreamRegistration registration = 
                     ui.getSession().getResourceRegistry().registerResource(resource);
                 String url = registration.getResourceUri().toString();
@@ -900,8 +880,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             Notification.show("Błąd podczas generowania bonu: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER);
         }
     }
-    
-    // Service calls
+
     private void updateOrderStatus(Long orderId, String status) {
         try {
             String email = getAdminEmail();
@@ -1099,8 +1078,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
         try {
             Workbook workbook = new XSSFWorkbook();
             Sheet sheet = workbook.createSheet("Zamówienia");
-            
-            // Create header style
+
             CellStyle headerStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
@@ -1112,21 +1090,18 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             headerStyle.setBorderTop(BorderStyle.THIN);
             headerStyle.setBorderLeft(BorderStyle.THIN);
             headerStyle.setBorderRight(BorderStyle.THIN);
-            
-            // Create data style
+
             CellStyle dataStyle = workbook.createCellStyle();
             dataStyle.setBorderBottom(BorderStyle.THIN);
             dataStyle.setBorderTop(BorderStyle.THIN);
             dataStyle.setBorderLeft(BorderStyle.THIN);
             dataStyle.setBorderRight(BorderStyle.THIN);
-            
-            // Create date style
+
             CellStyle dateStyle = workbook.createCellStyle();
             dateStyle.cloneStyleFrom(dataStyle);
             CreationHelper createHelper = workbook.getCreationHelper();
             dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd.mm.yyyy hh:mm"));
-            
-            // Create header row
+
             Row headerRow = sheet.createRow(0);
             String[] headers = {"ID", "Status", "Wartość", "Klient", "Kurier", "Data"};
             for (int i = 0; i < headers.length; i++) {
@@ -1134,41 +1109,34 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 cell.setCellValue(headers[i]);
                 cell.setCellStyle(headerStyle);
             }
-            
-            // Create data rows
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
             int rowNum = 1;
             for (OrderDto order : orders) {
                 Row row = sheet.createRow(rowNum++);
-                
-                // ID
+
                 Cell idCell = row.createCell(0);
                 idCell.setCellValue(order.id());
                 idCell.setCellStyle(dataStyle);
-                
-                // Status
+
                 Cell statusCell = row.createCell(1);
                 statusCell.setCellValue(order.status() != null ? getStatusLabel(order.status()) : "");
                 statusCell.setCellStyle(dataStyle);
-                
-                // Wartość
+
                 Cell priceCell = row.createCell(2);
                 priceCell.setCellValue(order.totalPrice());
                 priceCell.setCellStyle(dataStyle);
-                
-                // Klient
+
                 Cell clientCell = row.createCell(3);
                 clientCell.setCellValue(order.userEmail() != null ? order.userEmail() : "");
                 clientCell.setCellStyle(dataStyle);
-                
-                // Kurier
+
                 Cell courierCell = row.createCell(4);
                 String courierName = order.courierFullName() != null ? order.courierFullName() : 
                     (order.courierEmail() != null ? order.courierEmail() : "");
                 courierCell.setCellValue(courierName);
                 courierCell.setCellStyle(dataStyle);
-                
-                // Data
+
                 Cell dateCell = row.createCell(5);
                 if (order.createdAt() != null) {
                     dateCell.setCellValue(order.createdAt().format(formatter));
@@ -1177,13 +1145,11 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 }
                 dateCell.setCellStyle(dataStyle);
             }
-            
-            // Auto-size columns
+
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
             }
-            
-            // Write to byte array
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             workbook.write(baos);
             workbook.close();
@@ -1235,13 +1201,11 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 Notification.show("Błąd autoryzacji", 3000, Notification.Position.TOP_CENTER);
                 return;
             }
-            
-            // Get statistics data
+
             double todayRevenue = restaurantService.getTodayRevenue(email);
             long todayOrders = restaurantService.getTodayOrdersCount(email);
             Map<String, Integer> topDishes = restaurantService.getTopDishes(email, 10);
-            
-            // Calculate weekly and monthly stats
+
             LocalDateTime weekStart = LocalDateTime.now().minusDays(7).withHour(0).withMinute(0).withSecond(0).withNano(0);
             LocalDateTime monthStart = LocalDateTime.now().minusDays(30).withHour(0).withMinute(0).withSecond(0).withNano(0);
             
@@ -1263,29 +1227,25 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             long monthOrders = allOrders.stream()
                 .filter(o -> o.createdAt() != null && o.createdAt().isAfter(monthStart))
                 .count();
-            
-            // Calculate average order value
+
             double avgOrderValue = allOrders.stream()
                 .filter(o -> "DELIVERED".equals(o.status()))
                 .mapToDouble(OrderDto::totalPrice)
                 .average()
                 .orElse(0.0);
-            
-            // Calculate courier statistics
+
             Map<String, Long> courierStats = allOrders.stream()
                 .filter(o -> o.courierFullName() != null)
                 .collect(Collectors.groupingBy(
                     o -> o.courierFullName(),
                     Collectors.counting()
                 ));
-            
-            // Main stats in 2 columns layout
+
             HorizontalLayout mainStatsLayout = new HorizontalLayout();
             mainStatsLayout.setWidthFull();
             mainStatsLayout.setSpacing(true);
             mainStatsLayout.getStyle().set("margin-bottom", "1rem");
-            
-            // Left column: Revenue and Orders
+
             VerticalLayout leftColumn = new VerticalLayout();
             leftColumn.setSpacing(false);
             leftColumn.setPadding(false);
@@ -1325,8 +1285,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             ordersCards.add(createStatCard("Miesiąc", String.valueOf(monthOrders), VaadinIcon.CALENDAR_CLOCK));
             
             leftColumn.add(revenueSectionTitle, revenueCards, ordersSectionTitle, ordersCards);
-            
-            // Right column: Analysis
+
             VerticalLayout rightColumn = new VerticalLayout();
             rightColumn.setSpacing(false);
             rightColumn.setPadding(false);
@@ -1337,8 +1296,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             analysisLayout.setWidthFull();
             analysisLayout.setSpacing(true);
             analysisLayout.getStyle().set("margin-bottom", "0");
-            
-            // Top dishes section
+
             Div topDishesDiv = new Div();
             topDishesDiv.getStyle().set("background", "var(--bg-primary)");
             topDishesDiv.getStyle().set("border", "1px solid var(--border-color)");
@@ -1389,8 +1347,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 }
                 topDishesDiv.add(dishesList);
             }
-            
-            // Courier statistics section
+
             Div courierStatsDiv = new Div();
             courierStatsDiv.getStyle().set("background", "var(--bg-primary)");
             courierStatsDiv.getStyle().set("border", "1px solid var(--border-color)");
@@ -1442,8 +1399,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             
             analysisLayout.add(topDishesDiv, courierStatsDiv);
             rightColumn.add(analysisLayout);
-            
-            // Charts section - using simple HTML canvas with Chart.js
+
             H3 chartsSectionTitle = new H3("📈 Wykres");
             chartsSectionTitle.getStyle().set("margin-top", "0");
             chartsSectionTitle.getStyle().set("margin-bottom", "0.5rem");
@@ -1458,8 +1414,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             chartsDiv.getStyle().set("box-shadow", "var(--shadow-sm)");
             
             chartsDiv.add(chartsSectionTitle);
-            
-            // Prepare data for charts as JSON
+
             String labelsJson = topDishes.entrySet().stream()
                 .limit(5)
                 .map(e -> "\"" + e.getKey().replace("\"", "\\\"") + "\"")
@@ -1468,8 +1423,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
                 .limit(5)
                 .map(e -> String.valueOf(e.getValue()))
                 .collect(Collectors.joining(","));
-            
-            // Create chart containers
+
             Div chartContainer = new Div();
             chartContainer.getStyle().set("position", "relative");
             chartContainer.getStyle().set("height", "250px");
@@ -1481,8 +1435,7 @@ public class RestaurantAdminView extends VerticalLayout implements BeforeEnterOb
             rightColumn.add(chartsDiv);
             
             mainStatsLayout.add(leftColumn, rightColumn);
-            
-            // Add Chart.js and create charts
+
             getElement().executeJs(
                 "if (typeof Chart === 'undefined') {" +
                 "  const script = document.createElement('script');" +

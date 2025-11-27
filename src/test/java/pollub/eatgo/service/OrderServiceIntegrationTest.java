@@ -109,20 +109,17 @@ class OrderServiceIntegrationTest {
 
     @Test
     void createOrder_Integration() {
-        // When
         OrderDto dto = orderService.createOrder(client.getId(), createRequest());
 
-        // Then
         assertNotNull(dto);
         assertNotNull(dto.id());
         assertEquals("PLACED", dto.status());
-        assertEquals(70.0, dto.totalPrice(), 0.001); // 2*20 + 1*25 + 5
+        assertEquals(70.0, dto.totalPrice(), 0.001);
 
         Order saved = orderRepository.findById(dto.id()).orElseThrow();
         assertEquals(client.getId(), saved.getUser().getId());
         assertEquals(restaurant.getId(), saved.getRestaurant().getId());
         assertEquals(address.getId(), saved.getAddress().getId());
-        // Powinny być 2 rekordy OrderItem (po jednym na danie), a ilość jest w polu quantity
         assertEquals(2, saved.getItems().size());
         int totalQuantity = saved.getItems().stream().mapToInt(OrderItem::getQuantity).sum();
         assertEquals(3, totalQuantity);
@@ -130,14 +127,11 @@ class OrderServiceIntegrationTest {
 
     @Test
     void listUserOrders_Integration() {
-        // Given
         orderService.createOrder(client.getId(), createRequest());
         orderService.createOrder(client.getId(), createRequest());
 
-        // When
         List<OrderDto> orders = orderService.listUserOrders(client.getId());
 
-        // Then
         assertEquals(2, orders.size());
         assertTrue(orders.get(0).createdAt().isAfter(orders.get(1).createdAt())
                 || orders.get(0).createdAt().isEqual(orders.get(1).createdAt()));
@@ -145,13 +139,10 @@ class OrderServiceIntegrationTest {
 
     @Test
     void getOrderDetails_Integration() {
-        // Given
         OrderDto dto = orderService.createOrder(client.getId(), createRequest());
 
-        // When
         OrderDetailsDto details = orderService.getOrderDetails(client.getId(), dto.id());
 
-        // Then
         assertNotNull(details);
         assertEquals(dto.id(), details.id());
         assertEquals("PLACED", details.status());

@@ -43,7 +43,7 @@ public class User {
     @JoinColumn(name = "default_address_id")
     private Address defaultAddress;
     
-    private String theme; // "light" or "dark"
+    private String theme;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

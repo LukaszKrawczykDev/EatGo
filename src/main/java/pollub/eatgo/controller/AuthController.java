@@ -36,7 +36,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already in use");
         }
 
-		// Wybór roli: CLIENT albo RESTAURANT_ADMIN
 		if (body.getRole() == null) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Role is required");
 		}
@@ -57,7 +56,6 @@ public class AuthController {
         user = userRepository.save(user);
 
 		if (role == User.Role.RESTAURANT_ADMIN) {
-			// Walidacja wymaganych pól restauracji
 			if (body.getRestaurantName() == null || body.getRestaurantName().isBlank()
 					|| body.getRestaurantAddress() == null || body.getRestaurantAddress().isBlank()) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("restaurantName and restaurantAddress are required for RESTAURANT_ADMIN");
@@ -106,8 +104,7 @@ public class AuthController {
         String email = auth.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // Sprawdź czy stare hasło jest poprawne
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, body.getOldPassword())
@@ -116,7 +113,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nieprawidłowe obecne hasło");
         }
         
-        // Zmień hasło
+
         user.setPassword(passwordEncoder.encode(body.getNewPassword()));
         userRepository.save(user);
         

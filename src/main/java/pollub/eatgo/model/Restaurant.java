@@ -27,7 +27,7 @@ public class Restaurant {
     @PositiveOrZero
     private double deliveryPrice;
 
-    private String imageUrl; // URL do zdjęcia restauracji
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")

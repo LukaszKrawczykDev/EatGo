@@ -65,14 +65,11 @@ class AddressServiceUnitTest {
 
     @Test
     void testAddAddress_Success() {
-        // Given
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(addressRepository.save(any(Address.class))).thenReturn(testAddress);
 
-        // When
         AddressDto result = addressService.addAddress(1L, addressCreateDto);
 
-        // Then
         assertNotNull(result);
         assertEquals(1L, result.id());
         assertEquals("Warszawa", result.city());
@@ -86,7 +83,6 @@ class AddressServiceUnitTest {
 
     @Test
     void testListAddresses_Success() {
-        // Given
         Address address1 = Address.builder()
                 .id(1L)
                 .city("Warszawa")
@@ -108,10 +104,8 @@ class AddressServiceUnitTest {
         when(addressRepository.findByUserIdOrderByIdDesc(1L))
                 .thenReturn(Arrays.asList(address2, address1));
 
-        // When
         List<AddressDto> result = addressService.listAddresses(1L);
 
-        // Then
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals("Kraków", result.get(0).city());
@@ -121,15 +115,12 @@ class AddressServiceUnitTest {
 
     @Test
     void testDeleteAddress_Success() {
-        // Given
         when(addressRepository.findByIdAndUserId(1L, 1L))
                 .thenReturn(Optional.of(testAddress));
         doNothing().when(addressRepository).delete(testAddress);
 
-        // When
         assertDoesNotThrow(() -> addressService.deleteAddress(1L, 1L));
 
-        // Then
         verify(addressRepository, times(1)).findByIdAndUserId(1L, 1L);
         verify(addressRepository, times(1)).delete(testAddress);
     }
@@ -137,10 +128,8 @@ class AddressServiceUnitTest {
 
     @Test
     void testAddAddress_UserNotFound_ShouldThrow() {
-        // Given
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThrows(RuntimeException.class, () -> addressService.addAddress(1L, addressCreateDto));
         verify(userRepository, times(1)).findById(1L);
         verify(addressRepository, never()).save(any(Address.class));
@@ -148,7 +137,6 @@ class AddressServiceUnitTest {
 
     @Test
     void testUpdateAddress_AddressNotFound_ShouldThrow() {
-        // Given
         when(addressRepository.findByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
 
         AddressCreateDto updateDto = new AddressCreateDto(
@@ -158,7 +146,6 @@ class AddressServiceUnitTest {
                 "2"
         );
 
-        // When & Then
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> addressService.updateAddress(1L, 99L, updateDto));
         assertEquals("Adres nie znaleziony", ex.getMessage());
@@ -168,10 +155,8 @@ class AddressServiceUnitTest {
 
     @Test
     void testDeleteAddress_AddressNotFound_ShouldThrow() {
-        // Given
         when(addressRepository.findByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
 
-        // When & Then
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> addressService.deleteAddress(1L, 99L));
         assertEquals("Adres nie znaleziony", ex.getMessage());

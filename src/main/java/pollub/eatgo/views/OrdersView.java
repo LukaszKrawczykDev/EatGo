@@ -43,8 +43,7 @@ public class OrdersView extends VerticalLayout {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         this.orderNotificationService = orderNotificationService;
-        
-        // Inicjalizacja ObjectMapper z obsługą dat Java 8
+
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         this.objectMapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -64,8 +63,7 @@ public class OrdersView extends VerticalLayout {
         
         H2 title = new H2("Moje zamówienia");
         title.addClassName("orders-title");
-        
-        // Sekcja "W realizacji"
+
         Div activeSection = new Div();
         activeSection.addClassName("orders-section");
         H3 activeTitle = new H3("W realizacji");
@@ -75,8 +73,7 @@ public class OrdersView extends VerticalLayout {
         activeOrdersContainer.setPadding(false);
         activeOrdersContainer.setWidthFull();
         activeSection.add(activeTitle, activeOrdersContainer);
-        
-        // Sekcja "Zakończone"
+
         Div completedSection = new Div();
         completedSection.addClassName("orders-section");
         completedSection.getStyle().set("margin-top", "3rem");
@@ -95,7 +92,6 @@ public class OrdersView extends VerticalLayout {
     @Override
     protected void onAttach(com.vaadin.flow.component.AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        // Najpierw pobierz ID użytkownika z localStorage, potem załaduj zamówienia
         getUI().ifPresent(ui -> {
             ui.access(() -> {
                 ui.getPage().executeJs(
@@ -179,8 +175,7 @@ public class OrdersView extends VerticalLayout {
                         showEmptyState();
                         return;
                     }
-                    
-                    // Sprawdź czy to jest poprawny JSON
+
                     if (!ordersJson.trim().startsWith("[")) {
                         System.err.println("OrdersView: Invalid JSON format - doesn't start with '[': " + ordersJson.substring(0, Math.min(100, ordersJson.length())));
                         Notification.show("Błąd: Nieprawidłowy format danych", 3000, Notification.Position.TOP_CENTER);
@@ -193,30 +188,22 @@ public class OrdersView extends VerticalLayout {
                     
                     System.out.println("OrdersView: Parsed " + orders.size() + " orders");
 
-                    // Wykryj przejście zamówienia w stan DELIVERED
-                    // Sprawdź czy któreś zamówienie właśnie zmieniło status na DELIVERED
                     boolean isFirstLoad = lastStatuses.isEmpty();
                     
                     for (OrderDto order : orders) {
                         String previous = lastStatuses.get(order.id());
                         String current = order.status();
-                        
-                        // Pokazuj modal tylko gdy:
-                        // 1. To nie jest pierwsze załadowanie (mamy poprzednie statusy)
-                        // 2. Poprzedni status nie był DELIVERED
-                        // 3. Aktualny status jest DELIVERED
-                        // 4. Modal dla tego zamówienia nie został jeszcze pokazany
+
                         if (!isFirstLoad 
                                 && previous != null
                                 && !"DELIVERED".equalsIgnoreCase(previous)
                                 && "DELIVERED".equalsIgnoreCase(current)
                                 && !shownDeliveredDialogs.contains(order.id())) {
                             System.out.println("OrdersView: Detected status change to DELIVERED for order #" + order.id());
-                            shownDeliveredDialogs.add(order.id()); // Oznacz, że modal został pokazany
+                            shownDeliveredDialogs.add(order.id());
                             showDeliveredDialog(order.id());
                         }
-                        
-                        // Zapamiętaj aktualny status dla następnego porównania
+
                         lastStatuses.put(order.id(), current);
                     }
                     

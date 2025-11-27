@@ -63,7 +63,6 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
     }
     
     private void loadRestaurantData() {
-        // Pobierz dane restauracji i menu
         List<RestaurantSummaryDto> restaurants = restaurantService.listRestaurants();
         restaurant = restaurants.stream()
                 .filter(r -> r.id().equals(restaurantId))
@@ -88,18 +87,15 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
         removeAll();
         
         System.out.println("RestaurantView.buildView: Starting build, menu size: " + (menu != null ? menu.size() : "null"));
-        
-        // Header
+
         headerComponent = new HeaderComponent(authService, tokenValidationService, orderNotificationService);
         add(headerComponent);
         System.out.println("RestaurantView.buildView: Header added");
-        
-        // Hero section
+
         Div heroSection = createHeroSection();
         add(heroSection);
         System.out.println("RestaurantView.buildView: Hero section added");
-        
-        // Menu section
+
         Div menuSectionDiv;
         if (menu != null && !menu.isEmpty()) {
             System.out.println("RestaurantView.buildView: Creating menu section with " + menu.size() + " dishes");
@@ -157,8 +153,7 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
         }
         
         System.out.println("RestaurantView: Creating menu section with " + menu.size() + " dishes");
-        
-        // Grupuj dania po kategoriach (wszystkie dania z getMenu są już dostępne)
+
         Map<String, List<DishDto>> dishesByCategory = menu.stream()
                 .collect(Collectors.groupingBy(
                         dish -> dish.category() != null && !dish.category().isEmpty() ? dish.category() : "Inne"
@@ -215,8 +210,7 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
         card.getStyle().set("display", "block"); // Wymuś wyświetlenie
         card.getStyle().set("visibility", "visible");
         card.getStyle().set("opacity", "1");
-        
-        // Image - zawsze wyświetlaj, nawet jeśli brak URL (placeholder)
+
         Div imageDiv = new Div();
         imageDiv.addClassName("dish-image");
         
@@ -227,7 +221,6 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
             imageDiv.add(img);
             System.out.println("RestaurantView.createDishCard: Added image for " + dish.name() + " from " + dish.imageUrl());
         } else {
-            // Placeholder jeśli brak zdjęcia - użyj emoji lub ikony
             Div placeholder = new Div();
             placeholder.addClassName("dish-image-placeholder");
             placeholder.setText("🍽️");
@@ -278,8 +271,6 @@ public class RestaurantView extends VerticalLayout implements HasUrlParameter<St
     
     private void addToCart(DishDto dish) {
         System.out.println("RestaurantView.addToCart: Adding dish " + dish.name() + " (ID: " + dish.id() + ") to restaurant " + restaurantId);
-        
-        // Pobierz koszyki z localStorage - konwertuj Long na String/Number dla JavaScript
         String restaurantIdStr = String.valueOf(restaurantId);
         String dishIdStr = String.valueOf(dish.id());
         String dishName = dish.name();
