@@ -87,7 +87,6 @@ public class RestaurantSettingsView extends VerticalLayout implements BeforeEnte
         content.add(formLayout);
         add(content);
 
-        // Load email from token
         loadAdminEmail();
     }
 
@@ -138,7 +137,6 @@ public class RestaurantSettingsView extends VerticalLayout implements BeforeEnte
                 return auth.getName();
             }
         } catch (Exception e) {
-            // Ignore
         }
         return null;
     }

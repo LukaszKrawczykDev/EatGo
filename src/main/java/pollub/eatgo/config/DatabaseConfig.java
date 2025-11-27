@@ -41,10 +41,8 @@ public class DatabaseConfig {
         String username;
         String password;
 
-        // Jeśli mamy DATABASE_URL (Railway format: postgresql://user:pass@host:port/db)
         if (databaseUrl != null && !databaseUrl.isEmpty() && !databaseUrl.startsWith("jdbc:")) {
             try {
-                // Parsuj Railway DATABASE_URL format: postgresql://user:pass@host:port/db
                 URI dbUri = new URI(databaseUrl);
                 username = dbUri.getUserInfo().split(":")[0];
                 password = dbUri.getUserInfo().split(":")[1];
@@ -58,18 +56,15 @@ public class DatabaseConfig {
             } catch (Exception e) {
                 System.err.println("DatabaseConfig: Error parsing DATABASE_URL: " + e.getMessage());
                 e.printStackTrace();
-                // Fallback do zmiennych PGHOST, etc.
                 jdbcUrl = buildJdbcUrlFromPgVars();
                 username = pgUser.isEmpty() ? "postgres" : pgUser;
                 password = pgPassword.isEmpty() ? "" : pgPassword;
             }
         } else if (databaseUrl != null && !databaseUrl.isEmpty() && databaseUrl.startsWith("jdbc:")) {
-            // Już w formacie JDBC
             jdbcUrl = databaseUrl;
             username = pgUser.isEmpty() ? "postgres" : pgUser;
             password = pgPassword.isEmpty() ? "" : pgPassword;
         } else {
-            // Użyj zmiennych PGHOST, PGPORT, etc. (Railway również je tworzy)
             jdbcUrl = buildJdbcUrlFromPgVars();
             username = pgUser.isEmpty() ? "postgres" : pgUser;
             password = pgPassword.isEmpty() ? "" : pgPassword;

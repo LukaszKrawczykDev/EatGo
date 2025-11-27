@@ -28,7 +28,7 @@ public class Review {
     @JoinColumn(name = "reviewer_id")
     private User reviewer;
 
-    private String targetType; // RESTAURANT or COURIER
+    private String targetType;
 
     private Long targetId;
 

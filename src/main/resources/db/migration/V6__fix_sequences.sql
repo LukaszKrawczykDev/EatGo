@@ -1,5 +1,3 @@
--- Napraw sekwencje po migracji V5
--- Ustaw sekwencje na najwyższe użyte ID + 1, aby uniknąć konfliktów przy nowych rekordach
 SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 0) + 1, false);
 SELECT setval('restaurants_id_seq', COALESCE((SELECT MAX(id) FROM restaurants), 0) + 1, false);
 SELECT setval('dishes_id_seq', COALESCE((SELECT MAX(id) FROM dishes), 0) + 1, false);

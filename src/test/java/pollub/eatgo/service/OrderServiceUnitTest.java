@@ -99,7 +99,6 @@ class OrderServiceUnitTest {
 
     @Test
     void createOrder_ShouldCalculateTotalPriceAndDelivery() {
-        // Given
         OrderCreateRequestDto req = createValidRequest();
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
@@ -114,13 +113,10 @@ class OrderServiceUnitTest {
             return o;
         });
 
-        // When
         OrderDto result = orderService.createOrder(user.getId(), req);
 
-        // Then
         assertNotNull(result);
         assertEquals(999L, result.id());
-        // items: 2 * 20 + 1 * 25 = 65; delivery 5 => total 70
         assertEquals(70.0, result.totalPrice(), 0.001);
         assertEquals(5.0, result.deliveryPrice(), 0.001);
         assertEquals("PLACED", result.status());
@@ -130,7 +126,6 @@ class OrderServiceUnitTest {
 
     @Test
     void createOrder_ShouldThrowWhenDishFromAnotherRestaurant() {
-        // Given
         Restaurant otherRestaurant = Restaurant.builder()
                 .id(20L)
                 .name("Other")
@@ -156,7 +151,6 @@ class OrderServiceUnitTest {
         when(addressRepository.findByIdAndUserId(address.getId(), user.getId())).thenReturn(Optional.of(address));
         when(dishRepository.findById(foreignDish.getId())).thenReturn(Optional.of(foreignDish));
 
-        // When & Then
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> orderService.createOrder(user.getId(), req));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -166,7 +160,6 @@ class OrderServiceUnitTest {
 
     @Test
     void createOrder_ShouldThrowWhenDishNotAvailable() {
-        // Given
         dish1.setAvailable(false);
         OrderCreateRequestDto req = new OrderCreateRequestDto(
                 restaurant.getId(),
@@ -179,7 +172,6 @@ class OrderServiceUnitTest {
         when(addressRepository.findByIdAndUserId(address.getId(), user.getId())).thenReturn(Optional.of(address));
         when(dishRepository.findById(dish1.getId())).thenReturn(Optional.of(dish1));
 
-        // When & Then
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> orderService.createOrder(user.getId(), req));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());

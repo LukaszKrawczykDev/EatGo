@@ -52,9 +52,8 @@ public class ClientController {
         if (auth == null || auth.getName() == null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
 
-        String email = auth.getName(); // teraz auth.getName() = email
+        String email = auth.getName();
 
-        // zamiast isEmpty()/get() używamy orElseThrow, działa w Java 8+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 

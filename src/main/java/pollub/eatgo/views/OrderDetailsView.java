@@ -36,8 +36,7 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
                             OrderNotificationService orderNotificationService) {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
-        
-        // Inicjalizacja ObjectMapper z obsługą dat Java 8
+
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         this.objectMapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -57,8 +56,7 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         
         contentContainer = new Div();
         contentContainer.setWidthFull();
-        
-        // Dodaj placeholder podczas ładowania
+
         Div loadingDiv = new Div();
         loadingDiv.setText("Ładowanie szczegółów zamówienia...");
         loadingDiv.getStyle().set("text-align", "center");
@@ -88,7 +86,6 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         super.onAttach(attachEvent);
         System.out.println("OrderDetailsView.onAttach called, orderId: " + orderId);
         if (orderId != null) {
-            // Opóźnij ładowanie, aby upewnić się, że komponent jest w pełni zrenderowany
             getUI().ifPresent(ui -> {
                 ui.access(() -> {
                     System.out.println("OrderDetailsView: Scheduling loadOrderDetails");
@@ -230,17 +227,14 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
     private Div createOrderDetailsContent(OrderDetailsDto orderDetails) {
         Div container = new Div();
         container.setWidthFull();
-        
-        // Przycisk powrotu
+
         Button backButton = new Button("← Powrót do zamówień", VaadinIcon.ARROW_LEFT.create());
         backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         backButton.addClickListener(e -> getUI().ifPresent(u -> u.navigate(OrdersView.class)));
-        
-        // Nagłówek
+
         H2 title = new H2("Szczegóły zamówienia #" + orderDetails.id());
         title.getStyle().set("margin-top", "1rem");
-        
-        // Status zamówienia
+
         Div statusDiv = new Div();
         statusDiv.getStyle().set("margin", "1rem 0");
         statusDiv.getStyle().set("padding", "1rem");
@@ -253,13 +247,11 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         statusValue.getStyle().set("font-weight", "bold");
         statusValue.getStyle().set("font-size", "1.1rem");
         statusDiv.add(statusLabel, statusValue);
-        
-        // Informacje o restauracji
+
         String restaurantName = orderDetails.restaurant() != null && orderDetails.restaurant().name() != null ? 
             orderDetails.restaurant().name() : "Nieznana restauracja";
         Div restaurantDiv = createInfoSection("Restauracja", restaurantName);
-        
-        // Adres dostawy
+
         String fullAddress = "Nieznany";
         if (orderDetails.deliveryAddress() != null) {
             fullAddress = orderDetails.deliveryAddress().street() != null ? orderDetails.deliveryAddress().street() : "";
@@ -274,14 +266,12 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
             }
         }
         Div addressDiv = createInfoSection("Adres dostawy", fullAddress);
-        
-        // Data zamówienia
+
         String orderDate = orderDetails.createdAt() != null ? 
             orderDetails.createdAt().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) : 
             "Nieznana";
         Div dateDiv = createInfoSection("Data zamówienia", orderDate);
-        
-        // Lista produktów
+
         Div itemsSection = new Div();
         itemsSection.getStyle().set("margin-top", "2rem");
         H3 itemsTitle = new H3("Produkty");
@@ -307,8 +297,7 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         }
         
         itemsSection.add(itemsList);
-        
-        // Podsumowanie
+
         Div summarySection = new Div();
         summarySection.getStyle().set("margin-top", "2rem");
         summarySection.getStyle().set("padding", "1.5rem");

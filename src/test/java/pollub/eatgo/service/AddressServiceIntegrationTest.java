@@ -60,10 +60,8 @@ class AddressServiceIntegrationTest {
                 "5"
         );
 
-        // When
         AddressDto result = addressService.addAddress(testUser.getId(), dto);
 
-        // Then
         assertNotNull(result);
         assertNotNull(result.id());
         assertEquals("Warszawa", result.city());
@@ -71,7 +69,6 @@ class AddressServiceIntegrationTest {
         assertEquals("00-001", result.postalCode());
         assertEquals("5", result.apartmentNumber());
 
-        // Verify in database
         Optional<Address> savedAddress = addressRepository.findById(result.id());
         assertTrue(savedAddress.isPresent());
         assertEquals(testUser.getId(), savedAddress.get().getUser().getId());
@@ -79,17 +76,14 @@ class AddressServiceIntegrationTest {
 
     @Test
     void testListAddresses_Integration() {
-        // Given
         AddressCreateDto dto1 = new AddressCreateDto("Warszawa", "Testowa 1", "00-001", "5");
         AddressCreateDto dto2 = new AddressCreateDto("Kraków", "Testowa 2", "30-001", "10");
 
         addressService.addAddress(testUser.getId(), dto1);
         addressService.addAddress(testUser.getId(), dto2);
 
-        // When
         List<AddressDto> result = addressService.listAddresses(testUser.getId());
 
-        // Then
         assertNotNull(result);
         assertEquals(2, result.size());
         assertTrue(result.get(0).id() >= result.get(1).id());
@@ -97,7 +91,6 @@ class AddressServiceIntegrationTest {
 
     @Test
     void testUpdateAddress_Integration() {
-        // Given
         AddressCreateDto createDto = new AddressCreateDto("Warszawa", "Testowa 1", "00-001", "5");
         AddressDto created = addressService.addAddress(testUser.getId(), createDto);
 
@@ -108,10 +101,8 @@ class AddressServiceIntegrationTest {
                 "15"
         );
 
-        // When
         AddressDto updated = addressService.updateAddress(testUser.getId(), created.id(), updateDto);
 
-        // Then
         assertNotNull(updated);
         assertEquals(created.id(), updated.id());
         assertEquals("Kraków", updated.city());
@@ -119,7 +110,6 @@ class AddressServiceIntegrationTest {
         assertEquals("30-002", updated.postalCode());
         assertEquals("15", updated.apartmentNumber());
 
-        // Verify in database
         Optional<Address> addressInDb = addressRepository.findById(updated.id());
         assertTrue(addressInDb.isPresent());
         assertEquals("Kraków", addressInDb.get().getCity());
@@ -127,30 +117,24 @@ class AddressServiceIntegrationTest {
 
     @Test
     void testDeleteAddress_Integration() {
-        // Given
         AddressCreateDto dto = new AddressCreateDto("Warszawa", "Testowa 1", "00-001", "5");
         AddressDto created = addressService.addAddress(testUser.getId(), dto);
 
-        // When
         addressService.deleteAddress(testUser.getId(), created.id());
 
-        // Then
         assertFalse(addressRepository.findById(created.id()).isPresent());
     }
 
     @Test
     void testListAddresses_EmptyForUserWithoutAddresses() {
-        // When
         List<AddressDto> result = addressService.listAddresses(testUser.getId());
 
-        // Then
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void testUpdateAddress_WrongUser_ShouldThrow() {
-        // Given
         AddressCreateDto dto = new AddressCreateDto("Warszawa", "Testowa 1", "00-001", "5");
         AddressDto created = addressService.addAddress(testUser.getId(), dto);
 
@@ -164,7 +148,6 @@ class AddressServiceIntegrationTest {
 
         AddressCreateDto updateDto = new AddressCreateDto("Gdańsk", "Nowa 2", "80-002", "7");
 
-        // When & Then
         User finalOtherUser = otherUser;
         assertThrows(RuntimeException.class,
                 () -> addressService.updateAddress(finalOtherUser.getId(), created.id(), updateDto));

@@ -1,5 +1,3 @@
--- Usuń wszystkie stare dane używając TRUNCATE CASCADE (rozwiązuje problem cyklicznych zależności)
--- CASCADE automatycznie usuwa zależne rekordy w odpowiedniej kolejności
 TRUNCATE TABLE reviews CASCADE;
 TRUNCATE TABLE order_items CASCADE;
 TRUNCATE TABLE orders CASCADE;
@@ -8,7 +6,6 @@ TRUNCATE TABLE addresses CASCADE;
 TRUNCATE TABLE restaurants CASCADE;
 TRUNCATE TABLE users CASCADE;
 
--- Resetuj sekwencje
 ALTER SEQUENCE users_id_seq RESTART WITH 1;
 ALTER SEQUENCE restaurants_id_seq RESTART WITH 1;
 ALTER SEQUENCE dishes_id_seq RESTART WITH 1;
@@ -17,7 +14,6 @@ ALTER SEQUENCE orders_id_seq RESTART WITH 1;
 ALTER SEQUENCE order_items_id_seq RESTART WITH 1;
 ALTER SEQUENCE reviews_id_seq RESTART WITH 1;
 
--- WARSZAWA - 2 restauracje
 INSERT INTO users (id, email, password, full_name, role, created_at, updated_at) VALUES
 (1, 'admin@warszawa1.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Warszawa 1', 'RESTAURANT_ADMIN', NOW(), NOW()),
 (2, 'admin@warszawa2.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Warszawa 2', 'RESTAURANT_ADMIN', NOW(), NOW());
@@ -38,7 +34,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (3, 2, 'Classic Burger', 'Wołowina, ser, sałata, pomidor, sos', 25.00, TRUE, 'BURGER'),
 (4, 2, 'Cheeseburger', 'Wołowina, podwójny ser, sos BBQ', 28.00, TRUE, 'BURGER');
 
--- LUBLIN - 15 restauracji
 INSERT INTO users (id, email, password, full_name, role, created_at, updated_at) VALUES
 (5, 'admin@lublin1.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Lublin 1', 'RESTAURANT_ADMIN', NOW(), NOW()),
 (6, 'admin@lublin2.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Lublin 2', 'RESTAURANT_ADMIN', NOW(), NOW()),
@@ -91,9 +86,7 @@ INSERT INTO users (id, email, password, full_name, role, restaurant_id, created_
 (33, 'courier@lublin14.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Lublin 14', 'COURIER', 16, NOW(), NOW()),
 (34, 'courier@lublin15.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Lublin 15', 'COURIER', 17, NOW(), NOW());
 
--- Danie dla restauracji w Lublinie (po 10+ dań w każdej)
 INSERT INTO dishes (id, restaurant_id, name, description, price, available, category) VALUES
--- Pizzeria Bella Lublin (PIZZA)
 (5, 3, 'Margherita', 'Klasyczna pizza z sosem pomidorowym i mozzarellą', 22.99, TRUE, 'PIZZA'),
 (6, 3, 'Pepperoni', 'Pizza z pikantnym salami pepperoni', 25.50, TRUE, 'PIZZA'),
 (7, 3, 'Capricciosa', 'Pizza z szynką, pieczarkami, oliwkami', 27.99, TRUE, 'PIZZA'),
@@ -106,7 +99,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (14, 3, 'Vegetariana', 'Pizza z warzywami', 25.99, TRUE, 'PIZZA'),
 (15, 3, 'Calzone', 'Zapiekana pizza', 28.99, TRUE, 'PIZZA'),
 
--- Burger King Lublin (BURGER)
 (16, 4, 'Classic Burger', 'Wołowina, ser, sałata, pomidor, sos', 23.00, TRUE, 'BURGER'),
 (17, 4, 'Cheeseburger', 'Wołowina, podwójny ser, sos BBQ', 26.00, TRUE, 'BURGER'),
 (18, 4, 'Bacon Burger', 'Wołowina, bekon, ser, sos', 28.00, TRUE, 'BURGER'),
@@ -119,7 +111,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (25, 4, 'Fish Burger', 'Ryba, sałata, sos tartar', 25.00, TRUE, 'BURGER'),
 (26, 4, 'Turkey Burger', 'Indyk, sałata, pomidor', 24.00, TRUE, 'BURGER'),
 
--- Sushi Master Lublin (SUSHI)
 (27, 5, 'California Roll', 'Krab, awokado, ogórek', 32.00, TRUE, 'SUSHI'),
 (28, 5, 'Salmon Roll', 'Łosoś, awokado, ogórek', 35.00, TRUE, 'SUSHI'),
 (29, 5, 'Tuna Roll', 'Tuńczyk, awokado', 34.00, TRUE, 'SUSHI'),
@@ -132,7 +123,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (36, 5, 'Cucumber Roll', 'Ogórek, sezam', 18.00, TRUE, 'SUSHI'),
 (37, 5, 'Avocado Roll', 'Awokado, sezam', 20.00, TRUE, 'SUSHI'),
 
--- Kebab House Lublin (KEBAB)
 (38, 6, 'Kebab w bułce', 'Mięso, warzywa, sosy', 18.00, TRUE, 'KEBAB'),
 (39, 6, 'Kebab w picie', 'Mięso, warzywa, sosy w picie', 19.00, TRUE, 'KEBAB'),
 (40, 6, 'Kebab na talerzu', 'Mięso, frytki, warzywa, sosy', 22.00, TRUE, 'KEBAB'),
@@ -145,7 +135,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (47, 6, 'Kebab Family', 'Duży kebab dla rodziny', 45.00, TRUE, 'KEBAB'),
 (48, 6, 'Kebab z dodatkami', 'Kebab z extra dodatkami', 24.00, TRUE, 'KEBAB'),
 
--- Taco Loco Lublin (MEXICAN)
 (49, 7, 'Taco z kurczakiem', 'Kurczak, warzywa, sosy', 15.00, TRUE, 'MEXICAN'),
 (50, 7, 'Taco z wołowiną', 'Wołowina, warzywa, sosy', 16.00, TRUE, 'MEXICAN'),
 (51, 7, 'Taco z rybą', 'Ryba, warzywa, sosy', 17.00, TRUE, 'MEXICAN'),
@@ -158,7 +147,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (58, 7, 'Guacamole', 'Awokado, pomidory, cebula', 12.00, TRUE, 'MEXICAN'),
 (59, 7, 'Taco Box', '3 różne taco', 42.00, TRUE, 'MEXICAN'),
 
--- Pizza & Burger Lublin (PIZZA, BURGER)
 (60, 8, 'Margherita', 'Klasyczna pizza', 22.99, TRUE, 'PIZZA'),
 (61, 8, 'Pepperoni', 'Pizza z pepperoni', 25.50, TRUE, 'PIZZA'),
 (62, 8, 'Classic Burger', 'Wołowina, ser, warzywa', 23.00, TRUE, 'BURGER'),
@@ -171,7 +159,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (69, 8, 'Double Burger', 'Podwójna wołowina', 32.00, TRUE, 'BURGER'),
 (70, 8, 'Diavola', 'Pikantna pizza', 28.50, TRUE, 'PIZZA'),
 
--- Asian Fusion Lublin (ASIAN)
 (71, 9, 'Pad Thai', 'Makaron z kurczakiem i warzywami', 28.00, TRUE, 'ASIAN'),
 (72, 9, 'Kurczak po chińsku', 'Kurczak w sosie słodko-kwaśnym', 26.00, TRUE, 'ASIAN'),
 (73, 9, 'Ramen', 'Zupa z makaronem i mięsem', 32.00, TRUE, 'ASIAN'),
@@ -184,7 +171,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (80, 9, 'General Tso Chicken', 'Kurczak w pikantnym sosie', 28.00, TRUE, 'ASIAN'),
 (81, 9, 'Mongolian Beef', 'Wołowina z cebulą i papryką', 31.00, TRUE, 'ASIAN'),
 
--- Italian Corner Lublin (ITALIAN)
 (82, 10, 'Spaghetti Carbonara', 'Makaron z boczkiem i jajkiem', 32.00, TRUE, 'ITALIAN'),
 (83, 10, 'Penne Arrabbiata', 'Makaron z pikantnym sosem', 28.00, TRUE, 'ITALIAN'),
 (84, 10, 'Lasagne', 'Warstwowy makaron z mięsem', 35.00, TRUE, 'ITALIAN'),
@@ -197,7 +183,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (91, 10, 'Tiramisu', 'Deser kawowy', 18.00, TRUE, 'ITALIAN'),
 (92, 10, 'Cannoli', 'Rurki z kremem', 15.00, TRUE, 'ITALIAN'),
 
--- Fast Food Express Lublin (BURGER, KEBAB)
 (93, 11, 'Classic Burger', 'Wołowina, ser, warzywa', 22.00, TRUE, 'BURGER'),
 (94, 11, 'Cheeseburger', 'Wołowina, podwójny ser', 25.00, TRUE, 'BURGER'),
 (95, 11, 'Kebab w bułce', 'Mięso, warzywa, sosy', 17.00, TRUE, 'KEBAB'),
@@ -210,7 +195,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (102, 11, 'Kebab XXL', 'Duży kebab', 24.00, TRUE, 'KEBAB'),
 (103, 11, 'Spicy Burger', 'Pikantna wołowina', 26.00, TRUE, 'BURGER'),
 
--- Mexican Fiesta Lublin (MEXICAN)
 (104, 12, 'Taco z kurczakiem', 'Kurczak, warzywa, sosy', 14.00, TRUE, 'MEXICAN'),
 (105, 12, 'Taco z wołowiną', 'Wołowina, warzywa, sosy', 15.00, TRUE, 'MEXICAN'),
 (106, 12, 'Burrito', 'Mięso, ryż, fasola', 21.00, TRUE, 'MEXICAN'),
@@ -223,7 +207,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (113, 12, 'Guacamole', 'Awokado, pomidory', 11.00, TRUE, 'MEXICAN'),
 (114, 12, 'Taco z rybą', 'Ryba, warzywa, sosy', 16.00, TRUE, 'MEXICAN'),
 
--- Pizza Palace Lublin (PIZZA)
 (115, 13, 'Margherita', 'Klasyczna pizza', 21.99, TRUE, 'PIZZA'),
 (116, 13, 'Pepperoni', 'Pizza z pepperoni', 24.50, TRUE, 'PIZZA'),
 (117, 13, 'Capricciosa', 'Pizza z szynką i pieczarkami', 26.99, TRUE, 'PIZZA'),
@@ -236,7 +219,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (124, 13, 'Vegetariana', 'Pizza z warzywami', 24.99, TRUE, 'PIZZA'),
 (125, 13, 'Calzone', 'Zapiekana pizza', 27.99, TRUE, 'PIZZA'),
 
--- Burger Paradise Lublin (BURGER)
 (126, 14, 'Classic Burger', 'Wołowina, ser, warzywa', 24.00, TRUE, 'BURGER'),
 (127, 14, 'Cheeseburger', 'Wołowina, podwójny ser', 27.00, TRUE, 'BURGER'),
 (128, 14, 'Bacon Burger', 'Wołowina, bekon, ser', 29.00, TRUE, 'BURGER'),
@@ -249,7 +231,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (135, 14, 'Fish Burger', 'Ryba, warzywa', 26.00, TRUE, 'BURGER'),
 (136, 14, 'Turkey Burger', 'Indyk, warzywa', 25.00, TRUE, 'BURGER'),
 
--- Sushi World Lublin (SUSHI)
 (137, 15, 'California Roll', 'Krab, awokado, ogórek', 31.00, TRUE, 'SUSHI'),
 (138, 15, 'Salmon Roll', 'Łosoś, awokado', 34.00, TRUE, 'SUSHI'),
 (139, 15, 'Tuna Roll', 'Tuńczyk, awokado', 33.00, TRUE, 'SUSHI'),
@@ -262,7 +243,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (146, 15, 'Cucumber Roll', 'Ogórek, sezam', 17.00, TRUE, 'SUSHI'),
 (147, 15, 'Avocado Roll', 'Awokado, sezam', 19.00, TRUE, 'SUSHI'),
 
--- Kebab Express Lublin (KEBAB)
 (148, 16, 'Kebab w bułce', 'Mięso, warzywa, sosy', 17.00, TRUE, 'KEBAB'),
 (149, 16, 'Kebab w picie', 'Mięso, warzywa w picie', 18.00, TRUE, 'KEBAB'),
 (150, 16, 'Kebab na talerzu', 'Mięso, frytki, warzywa', 21.00, TRUE, 'KEBAB'),
@@ -275,7 +255,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (157, 16, 'Kebab Family', 'Duży kebab dla rodziny', 44.00, TRUE, 'KEBAB'),
 (158, 16, 'Kebab z dodatkami', 'Kebab z extra dodatkami', 23.00, TRUE, 'KEBAB'),
 
--- Pizza Corner Lublin (PIZZA)
 (159, 17, 'Margherita', 'Klasyczna pizza', 22.99, TRUE, 'PIZZA'),
 (160, 17, 'Pepperoni', 'Pizza z pepperoni', 25.50, TRUE, 'PIZZA'),
 (161, 17, 'Capricciosa', 'Pizza z szynką i pieczarkami', 27.99, TRUE, 'PIZZA'),
@@ -288,7 +267,6 @@ INSERT INTO dishes (id, restaurant_id, name, description, price, available, cate
 (168, 17, 'Vegetariana', 'Pizza z warzywami', 24.99, TRUE, 'PIZZA'),
 (169, 17, 'Calzone', 'Zapiekana pizza', 27.99, TRUE, 'PIZZA');
 
--- RZESZÓW - 2 restauracje
 INSERT INTO users (id, email, password, full_name, role, created_at, updated_at) VALUES
 (35, 'admin@rzeszow1.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Rzeszów 1', 'RESTAURANT_ADMIN', NOW(), NOW()),
 (36, 'admin@rzeszow2.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Admin Rzeszów 2', 'RESTAURANT_ADMIN', NOW(), NOW());
@@ -302,15 +280,11 @@ INSERT INTO users (id, email, password, full_name, role, restaurant_id, created_
 (38, 'courier@rzeszow2.pl', '{bcrypt}$2a$10$abcdefghijklmnopqrstuv', 'Kurier Rzeszów 2', 'COURIER', 19, NOW(), NOW());
 
 INSERT INTO dishes (id, restaurant_id, name, description, price, available, category) VALUES
--- Pizza Express Rzeszów
 (170, 18, 'Margherita', 'Klasyczna pizza z sosem pomidorowym i mozzarellą', 23.99, TRUE, 'PIZZA'),
 (171, 18, 'Pepperoni', 'Pizza z pikantnym salami pepperoni', 26.50, TRUE, 'PIZZA'),
--- Burger House Rzeszów
 (172, 19, 'Classic Burger', 'Wołowina, ser, sałata, pomidor, sos', 24.00, TRUE, 'BURGER'),
 (173, 19, 'Cheeseburger', 'Wołowina, podwójny ser, sos BBQ', 27.00, TRUE, 'BURGER');
 
--- Zaktualizuj sekwencje do najwyższego użytego ID + 1
--- To zapewnia, że nowe rekordy będą miały unikalne ID
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 SELECT setval('restaurants_id_seq', (SELECT MAX(id) FROM restaurants));
 SELECT setval('dishes_id_seq', (SELECT MAX(id) FROM dishes));
