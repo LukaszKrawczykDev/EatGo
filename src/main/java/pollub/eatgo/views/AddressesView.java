@@ -265,16 +265,13 @@ public class AddressesView extends VerticalLayout {
                 return;
             }
             
-            // Numer mieszkania może być pusty - to jest OK
             String finalApartmentNumber = (apartmentNumber != null && !apartmentNumber.trim().isEmpty()) ? apartmentNumber.trim() : "";
             
             System.out.println("AddressesView: Saving address - city=" + city + ", street=" + street + ", postalCode=" + postalCode + ", apartmentNumber=" + finalApartmentNumber);
             
-            // Wyłącz przycisk, aby zapobiec wielokrotnym kliknięciom
             saveBtn.setEnabled(false);
             saveBtn.setText("Zapisywanie...");
             
-            // Pobierz userId z localStorage i wywołaj metodę
             getElement().executeJs(
                 "return localStorage.getItem('eatgo-userId');"
             ).then(String.class, userIdStr -> {
@@ -300,7 +297,6 @@ public class AddressesView extends VerticalLayout {
         addressDialog.open();
     }
     
-    // Metoda wywoływana bezpośrednio z Java (nie przez JavaScript)
     private void saveAddressDirect(String city, String street, String postalCode, String apartmentNumber, String userIdStr) {
         System.out.println("=== AddressesView.saveAddressDirect CALLED ===");
         System.out.println("Parameters: city=" + city + ", street=" + street + ", postalCode=" + postalCode + ", apartmentNumber=" + apartmentNumber + ", userId=" + userIdStr);
@@ -320,7 +316,6 @@ public class AddressesView extends VerticalLayout {
                     Long userId = Long.parseLong(userIdStr);
                     System.out.println("AddressesView.saveAddressDirect: Parsed userId: " + userId);
                     
-                    // Jeśli apartmentNumber jest pustym stringiem, ustaw na null
                     String finalApartmentNumber = (apartmentNumber != null && !apartmentNumber.trim().isEmpty()) ? apartmentNumber.trim() : null;
                     System.out.println("AddressesView.saveAddressDirect: Final apartmentNumber: " + finalApartmentNumber);
                     
@@ -328,13 +323,11 @@ public class AddressesView extends VerticalLayout {
                     System.out.println("AddressesView.saveAddressDirect: Created DTO");
                     
                     if (editingAddress != null) {
-                        // Edycja istniejącego adresu
                         System.out.println("AddressesView: Updating address ID: " + editingAddress.id());
                         AddressDto updated = addressService.updateAddress(userId, editingAddress.id(), addressDto);
                         System.out.println("AddressesView: Address updated successfully, ID: " + updated.id());
                         Notification.show("Adres zaktualizowany pomyślnie!", 3000, Notification.Position.TOP_CENTER);
                     } else {
-                        // Dodawanie nowego adresu
                         System.out.println("AddressesView: Adding new address for userId: " + userId);
                         AddressDto saved = addressService.addAddress(userId, addressDto);
                         System.out.println("AddressesView: Address added successfully, ID: " + saved.id());
@@ -350,7 +343,6 @@ public class AddressesView extends VerticalLayout {
                     editingAddress = null;
                     System.out.println("AddressesView.saveAddressDirect: Reloading addresses");
                     
-                    // Odśwież listę adresów bezpośrednio (userId jest już zdefiniowane wcześniej)
                     List<AddressDto> addresses = addressService.listAddresses(userId);
                     System.out.println("AddressesView.saveAddressDirect: Reloaded " + addresses.size() + " addresses");
                     displayAddresses(addresses);

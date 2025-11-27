@@ -84,8 +84,6 @@ public class OrderService {
 		return toOrderDetailsDto(order);
 	}
 
-	// ----------------- helpers -----------------
-
 	private OrderItemDto toOrderItemDto(OrderItem oi) {
 		return new OrderItemDto(
 				oi.getId(),

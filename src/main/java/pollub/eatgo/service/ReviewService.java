@@ -111,11 +111,9 @@ public class ReviewService {
 	}
 
 	public Long findReviewableOrderForRestaurant(Long userId, Long restaurantId) {
-		// Znajdź dostarczone zamówienia użytkownika dla tej restauracji
 		List<Order> deliveredOrders = orderRepository.findByUserIdAndRestaurantIdAndStatus(
 				userId, restaurantId, OrderStatus.DELIVERED);
 		
-		// Znajdź pierwsze zamówienie, dla którego nie ma jeszcze recenzji restauracji
 		for (Order order : deliveredOrders) {
 			boolean alreadyReviewed = reviewRepository.existsByOrderIdAndReviewerIdAndTargetType(
 					order.getId(), userId, "RESTAURANT");
@@ -124,7 +122,7 @@ public class ReviewService {
 			}
 		}
 		
-		return null; // Nie znaleziono zamówienia, które można ocenić
+		return null;
 	}
 
 	private List<ReviewDto> mapToDto(List<Review> reviews) {

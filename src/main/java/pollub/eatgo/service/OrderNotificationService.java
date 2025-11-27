@@ -12,10 +12,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Prosty serwis trzymający powiadomienia o zmianach statusu zamówień w pamięci.
- * Nie tworzy osobnej encji ani tabeli w bazie – wszystko działa w Javie.
- */
 @Service
 public class OrderNotificationService {
 
@@ -67,7 +63,6 @@ public class OrderNotificationService {
                 list = new ArrayList<>(list);
             }
             list.add(notification);
-            // Trzymaj maksymalnie 50 ostatnich powiadomień na użytkownika
             list.sort(Comparator.comparing(OrderNotification::createdAt).reversed());
             if (list.size() > 50) {
                 list = new ArrayList<>(list.subList(0, 50));

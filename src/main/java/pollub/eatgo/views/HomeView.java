@@ -59,7 +59,6 @@ public class HomeView extends VerticalLayout {
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         
-        // Sprawdź rolę użytkownika i przekieruj jeśli potrzeba
         checkUserRoleAndRedirect();
         
         setSizeFull();
@@ -133,11 +132,9 @@ public class HomeView extends VerticalLayout {
         cityLayout.setAlignItems(Alignment.CENTER);
         cityLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         
-        // Kontener dla wyświetlania miasta (dla zalogowanych) lub wyboru (dla niezalogowanych)
         Div cityDisplayContainer = new Div();
         cityDisplayContainer.addClassName("city-display-container");
         
-        // Domyślnie pokaż wybór miasta
         cityComboBox = new ComboBox<>("Wybierz miasto");
         cityComboBox.setItems(AVAILABLE_CITIES);
         cityComboBox.setPlaceholder("Wszystkie miasta");
@@ -146,7 +143,6 @@ public class HomeView extends VerticalLayout {
         cityComboBox.addClassName("city-selector");
         cityComboBox.addValueChangeListener(e -> {
             selectedCity = e.getValue();
-            // Zapisz wybrane miasto w localStorage
             if (selectedCity != null) {
                 getElement().executeJs("localStorage.setItem('eatgo-city', $0);", selectedCity);
             } else {
@@ -155,7 +151,6 @@ public class HomeView extends VerticalLayout {
             filterRestaurants();
         });
         
-        // Wyświetlanie zapisanego miasta dla zalogowanych użytkowników
         Span savedCityDisplay = new Span();
         savedCityDisplay.addClassName("saved-city-display");
         savedCityDisplay.setVisible(false);
@@ -165,7 +160,6 @@ public class HomeView extends VerticalLayout {
         changeCityBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         changeCityBtn.setVisible(false);
         changeCityBtn.addClickListener(e -> {
-            // Przełącz na wybór miasta
             savedCityDisplay.setVisible(false);
             changeCityBtn.setVisible(false);
             cityComboBox.setVisible(true);
@@ -183,7 +177,6 @@ public class HomeView extends VerticalLayout {
         locationBtn.getStyle().set("align-items", "center");
         locationBtn.getStyle().set("justify-content", "center");
         
-        // Załaduj domyślne miasto z API dla zalogowanych użytkowników
         getElement().executeJs(
             "const token = localStorage.getItem('eatgo-token'); " +
             "if (token && token !== 'null' && token !== '') { " +
@@ -234,7 +227,6 @@ public class HomeView extends VerticalLayout {
         cityLayout.add(cityDisplayContainer, locationBtn);
         citySelectorWrapper.add(cityLayout);
         
-        // Search wrapper
         Div searchWrapper = new Div();
         searchWrapper.addClassName("search-wrapper");
         
@@ -279,41 +271,30 @@ public class HomeView extends VerticalLayout {
     
     @com.vaadin.flow.component.ClientCallable
     private void onLocationReceived(double lat, double lng) {
-        // Sprawdź czy użytkownik jest w jednym z dostępnych miast
         String detectedCity = detectCityFromCoordinates(lat, lng);
         
         if (detectedCity != null && AVAILABLE_CITIES.contains(detectedCity)) {
-            // Użytkownik jest w dostępnym mieście - ustaw miasto w selektorze
             cityComboBox.setValue(detectedCity);
             selectedCity = detectedCity;
             filterRestaurants();
             Notification.show("Wykryto lokalizację: " + detectedCity, 2000, Notification.Position.TOP_CENTER);
         } else {
-            // Użytkownik nie jest w dostępnym mieście
             showLocationNotAvailableDialog();
         }
     }
     
     private String detectCityFromCoordinates(double lat, double lng) {
-        // Przybliżone współrzędne miast (środek miasta)
-        // Warszawa: 52.2297° N, 21.0122° E
-        // Lublin: 51.2465° N, 22.5684° E
-        // Rzeszów: 50.0413° N, 21.9990° E
         
-        // Zakres tolerancji: ±0.5 stopnia (około 55 km)
         double tolerance = 0.5;
         
-        // Sprawdź Warszawa
         if (Math.abs(lat - 52.2297) < tolerance && Math.abs(lng - 21.0122) < tolerance) {
             return "Warszawa";
         }
         
-        // Sprawdź Lublin
         if (Math.abs(lat - 51.2465) < tolerance && Math.abs(lng - 22.5684) < tolerance) {
             return "Lublin";
         }
         
-        // Sprawdź Rzeszów
         if (Math.abs(lat - 50.0413) < tolerance && Math.abs(lng - 21.9990) < tolerance) {
             return "Rzeszów";
         }
@@ -370,12 +351,10 @@ public class HomeView extends VerticalLayout {
         categoriesContainer.getStyle().set("justify-content", "center");
         categoriesContainer.getStyle().set("flex-wrap", "wrap");
         
-        // Dodaj kategorię "Wszystkie"
         Button allCategoryBtn = createCategoryButton("Wszystkie", null);
         allCategoryBtn.addClassName("category-active");
         categoriesContainer.add(allCategoryBtn);
         
-        // Dodaj kategorie z ikonami
         for (Map.Entry<String, String> entry : CATEGORY_ICONS.entrySet()) {
             Button categoryBtn = createCategoryButton(entry.getValue() + " " + entry.getKey(), entry.getKey());
             categoriesContainer.add(categoryBtn);
@@ -392,10 +371,8 @@ public class HomeView extends VerticalLayout {
         btn.addClassName("category-btn");
         btn.addClickListener(e -> {
             selectedCategory = category;
-            // Usuń aktywną klasę ze wszystkich przycisków
             categoriesContainer.getChildren()
                 .forEach(child -> child.getElement().getClassList().remove("category-active"));
-            // Dodaj aktywną klasę do klikniętego przycisku
             btn.addClassName("category-active");
             filterRestaurants();
         });
@@ -428,7 +405,6 @@ public class HomeView extends VerticalLayout {
         card.addClassName("restaurant-card");
         card.addClassName("fade-in");
         
-        // Image
         Div imageDiv = new Div();
         imageDiv.addClassName("restaurant-image");
         if (restaurant.imageUrl() != null && !restaurant.imageUrl().isEmpty()) {
@@ -436,11 +412,9 @@ public class HomeView extends VerticalLayout {
             img.addClassName("restaurant-img");
             imageDiv.add(img);
         } else {
-            // Fallback do emoji jeśli brak zdjęcia
             imageDiv.setText(getRestaurantEmoji(restaurant.name()));
         }
         
-        // Content
         Div content = new Div();
         content.addClassName("restaurant-content");
         
@@ -450,11 +424,9 @@ public class HomeView extends VerticalLayout {
         Paragraph address = new Paragraph(restaurant.address());
         address.addClassName("restaurant-address");
         
-        // Delivery price
         Span deliveryInfo = new Span("💰 " + String.format("%.2f zł", restaurant.deliveryPrice()) + " dostawa");
         deliveryInfo.addClassName("delivery-price");
         
-        // Przyciski - wyśrodkowane pod ceną dostawy (jeden pod drugim)
         Div buttonWrapper = new Div();
         buttonWrapper.addClassName("menu-button-wrapper");
         
@@ -521,7 +493,6 @@ public class HomeView extends VerticalLayout {
                 emptyMsg.addClassName(LumoUtility.TextAlignment.CENTER);
                 content.add(emptyMsg);
             } else {
-                // Grupuj dania po kategoriach
                 Map<String, List<DishDto>> dishesByCategory = menu.stream()
                         .filter(DishDto::available)
                         .collect(Collectors.groupingBy(
@@ -571,10 +542,7 @@ public class HomeView extends VerticalLayout {
         Div card = new Div();
         card.addClassName("dish-card");
         card.addClassName("fade-in");
-        
-        // W modalu menu NIE wyświetlamy zdjęć - tylko w widoku szczegółów restauracji
-        
-        // Header z nazwą i kategorią
+
         Div cardHeader = new Div();
         cardHeader.addClassName("dish-card-header");
         
@@ -594,11 +562,9 @@ public class HomeView extends VerticalLayout {
         
         cardHeader.add(nameCategoryRow);
         
-        // Opis
         Paragraph description = new Paragraph(dish.description() != null ? dish.description() : "");
         description.addClassName("dish-description");
         
-        // Footer z ceną i przyciskiem
         Div cardFooter = new Div();
         cardFooter.addClassName("dish-card-footer");
         
@@ -609,7 +575,6 @@ public class HomeView extends VerticalLayout {
         addToCartBtn.addClassName("add-to-cart-btn");
         addToCartBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         addToCartBtn.addClickListener(e -> {
-            // Znajdź restaurację dla tego dania
             RestaurantSummaryDto dishRestaurant = allRestaurants.stream()
                     .filter(r -> r.id().equals(dish.restaurantId()))
                     .findFirst()
@@ -649,7 +614,6 @@ public class HomeView extends VerticalLayout {
         
         List<RestaurantSummaryDto> filtered = allRestaurants.stream()
                 .filter(r -> {
-                    // Filtruj po mieście
                     if (selectedCity != null && !selectedCity.isEmpty()) {
                         String address = r.address().toLowerCase();
                         if (!address.contains(selectedCity.toLowerCase())) {
@@ -657,7 +621,6 @@ public class HomeView extends VerticalLayout {
                         }
                     }
                     
-                    // Filtruj po kategorii - sprawdź czy restauracja ma dania w tej kategorii
                     if (selectedCategory != null && !selectedCategory.isEmpty()) {
                         try {
                             List<DishDto> menu = restaurantService.getMenu(r.id());
@@ -671,7 +634,6 @@ public class HomeView extends VerticalLayout {
                         }
                     }
                     
-                    // Filtruj po wyszukiwaniu
                     if (searchTerm != null && !searchTerm.trim().isEmpty()) {
                         String lowerTerm = searchTerm.toLowerCase();
                         return r.name().toLowerCase().contains(lowerTerm) ||
@@ -715,7 +677,6 @@ public class HomeView extends VerticalLayout {
         
         System.out.println("HomeView.addDishToCart: Adding dish " + dish.name() + " (ID: " + dish.id() + ") to restaurant " + restaurant.id());
         
-        // Konwertuj Long na String/Number dla JavaScript
         String restaurantIdStr = String.valueOf(restaurant.id());
         String dishIdStr = String.valueOf(dish.id());
         String dishName = dish.name();

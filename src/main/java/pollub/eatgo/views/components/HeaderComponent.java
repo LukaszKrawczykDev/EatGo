@@ -49,7 +49,6 @@ public class HeaderComponent extends Div {
         Div logoContainer = new Div();
         logoContainer.addClassName("logo-container");
         
-        // Utwórz klikalny div zamiast RouterLink, aby móc dynamicznie przekierowywać
         Div logoLink = new Div();
         logoLink.addClassName("logo-link");
         logoLink.getStyle().set("cursor", "pointer");
@@ -72,7 +71,6 @@ public class HeaderComponent extends Div {
         initializeTheme();
         updateThemeToggleIcon();
         
-        // Kontenery dla menu użytkownika i przycisków logowania
         userMenuContainer = new Div();
         userMenuContainer.addClassName("user-menu-container");
         userMenuContainer.setVisible(false);
@@ -85,16 +83,12 @@ public class HeaderComponent extends Div {
         headerContent.add(logoContainer, headerActions);
         add(headerContent);
         
-        // Załaduj API interceptor (automatyczne dodawanie tokena do requestów)
         loadApiInterceptor();
         
-        // Sprawdź ważność tokena i wyczyść jeśli nieprawidłowy
         validateAndCleanToken();
         
-        // Sprawdź stan logowania i zaktualizuj UI
         checkLoginStatus();
         
-        // Nasłuchuj zmian w localStorage (dla aktualizacji po zalogowaniu)
         setupStorageListener();
     }
     
@@ -198,11 +192,9 @@ public class HeaderComponent extends Div {
     
     @com.vaadin.flow.component.ClientCallable
     public void onLoginStatusChanged() {
-        // Użyj UI.access, aby upewnić się, że aktualizacja jest w odpowiednim wątku
         getUI().ifPresent(ui -> {
             ui.access(() -> {
                 System.out.println("onLoginStatusChanged called - checking login status");
-                // Wywołaj checkLoginStatus w odpowiednim wątku UI
                 checkLoginStatus();
             });
         });
@@ -273,7 +265,6 @@ public class HeaderComponent extends Div {
         });
     }
     
-    // Publiczna metoda do bezpośredniej aktualizacji po zalogowaniu (bez odczytywania z localStorage)
     public void updateAfterLogin(String userId, String role) {
         getUI().ifPresent(ui -> {
             ui.access(() -> {
@@ -285,7 +276,6 @@ public class HeaderComponent extends Div {
         });
     }
     
-    // Metoda wywoływana przez JavaScript po zapisaniu tokena
     @com.vaadin.flow.component.ClientCallable
     public void onTokenSaved(String userId, String role) {
         System.out.println("onTokenSaved called - userId: '" + userId + "', role: '" + role + "'");
@@ -300,7 +290,6 @@ public class HeaderComponent extends Div {
                     createUserMenu(userId, role);
                     System.out.println("User menu created, setting visibility...");
                     
-                    // Ustaw widoczność
                     userMenuContainer.setVisible(true);
                     loginButtonsContainer.setVisible(false);
                     
@@ -317,11 +306,9 @@ public class HeaderComponent extends Div {
     private void createUserMenu(String userId, String role) {
         System.out.println("createUserMenu called - userId: " + userId + ", role: " + role);
         
-        // Usuń wszystkie istniejące elementy
         userMenuContainer.removeAll();
         System.out.println("userMenuContainer cleared");
         
-        // Parsuj userId do Long (jeśli możliwe)
         Long parsedUserId = null;
         try {
             if (userId != null && !userId.isBlank()) {
@@ -336,23 +323,19 @@ public class HeaderComponent extends Div {
         notificationsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
         notificationsButton.setTooltipText("Powiadomienia");
 
-        // Badge z liczbą nieprzeczytanych powiadomień
         notificationsBadge = new Span();
         notificationsBadge.addClassName("notifications-badge");
         notificationsBadge.setVisible(false);
 
         if (parsedUserId != null) {
-            // Opóźnij aktualizację badge, aby upewnić się, że komponent jest w pełni zrenderowany
             getUI().ifPresent(ui -> {
                 ui.access(() -> {
                     ui.getPage().executeJs("setTimeout(function() { $0.$server.refreshNotificationsBadge(); }, 200);", getElement());
                 });
             });
-            // Uruchom okresowe odświeżanie badge co 3 sekundy
             startBadgeRefreshTimer(parsedUserId);
         }
 
-        // Kontener na dzwonek + badge
         Div notificationsContainer = new Div();
         notificationsContainer.addClassName("notifications-container");
         notificationsContainer.add(notificationsButton, notificationsBadge);
@@ -366,30 +349,22 @@ public class HeaderComponent extends Div {
             }
         });
         
-        // MenuBar z rozwijanym menu "Profil"
         MenuBar userMenu = new MenuBar();
         userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
         userMenu.addClassName("user-menu");
         
-        // Włącz otwieranie menu po najechaniu (hover)
         userMenu.getElement().setProperty("openOnHover", true);
         
-        // Główny item menu - nazwa zależy od roli
-        String menuLabel = "CLIENT".equalsIgnoreCase(role) ? "Profil" : 
+        String menuLabel = "CLIENT".equalsIgnoreCase(role) ? "Profil" :
                           "RESTAURANT_ADMIN".equalsIgnoreCase(role) ? "Restauracja" : "Profil";
         
         var profileItem = userMenu.addItem(menuLabel, e -> {
-            // Kliknięcie na główny item - nie robi nic, tylko rozwija menu
         });
         profileItem.addComponentAsFirst(VaadinIcon.USER.create());
         
-        // Submenu - wyświetla się po najechaniu
         var profileSubMenu = profileItem.getSubMenu();
         
-        // Menu różni się w zależności od roli
         if ("CLIENT".equalsIgnoreCase(role)) {
-            // Menu dla klienta
-            // Dodaj przycisk koszyków (tylko dla klientów)
             Button cartsButton = new Button(VaadinIcon.CART.create());
             cartsButton.addClassName("cart-button");
             cartsButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
@@ -398,7 +373,6 @@ public class HeaderComponent extends Div {
                 getUI().ifPresent(ui -> ui.navigate("cart"));
             });
             
-            // Dodaj badge z liczbą aktywnych koszyków
             Span cartsBadge = new Span("0");
             cartsBadge.addClassName("cart-badge");
             updateCartsBadge(cartsBadge);
@@ -407,7 +381,6 @@ public class HeaderComponent extends Div {
             cartContainer.addClassName("cart-container");
             cartContainer.add(cartsButton, cartsBadge);
             
-            // Opcje menu dla klienta
             var addressesSubItem = profileSubMenu.addItem("Adresy", e -> {
                 getUI().ifPresent(ui -> ui.navigate("addresses"));
             });
@@ -421,10 +394,8 @@ public class HeaderComponent extends Div {
             var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
             logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
             
-            // Dodaj elementy do kontenera w odpowiedniej kolejności
             userMenuContainer.add(notificationsContainer, cartContainer, userMenu);
         } else if ("RESTAURANT_ADMIN".equalsIgnoreCase(role)) {
-            // Menu dla administratora restauracji
             var dashboardSubItem = profileSubMenu.addItem("Panel restauracji", e -> {
                 getUI().ifPresent(ui -> ui.navigate("restaurant"));
             });
@@ -438,10 +409,8 @@ public class HeaderComponent extends Div {
             var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
             logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
             
-            // Dodaj elementy do kontenera (bez koszyka)
             userMenuContainer.add(notificationsContainer, userMenu);
         } else if ("COURIER".equalsIgnoreCase(role)) {
-            // Menu dla kuriera
             var dashboardSubItem = profileSubMenu.addItem("Panel kuriera", e -> {
                 getUI().ifPresent(ui -> ui.navigate("courier"));
             });
@@ -450,10 +419,8 @@ public class HeaderComponent extends Div {
             var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
             logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
             
-            // Dodaj elementy do kontenera (bez koszyka)
             userMenuContainer.add(notificationsContainer, userMenu);
         } else {
-            // Domyślne menu (fallback)
             var logoutSubItem = profileSubMenu.addItem("Wyloguj się", e -> handleLogout());
             logoutSubItem.addComponentAsFirst(VaadinIcon.SIGN_OUT.create());
             
@@ -462,7 +429,6 @@ public class HeaderComponent extends Div {
         
         System.out.println("Elements added to userMenuContainer - children count: " + userMenuContainer.getChildren().count());
         
-        // Wymuś odświeżenie UI
         System.out.println("createUserMenu completed");
     }
     
@@ -537,12 +503,10 @@ public class HeaderComponent extends Div {
     }
     
     private void startBadgeRefreshTimer(Long userId) {
-        // Zatrzymaj poprzedni timer jeśli istnieje
         if (badgeRefreshExecutor != null) {
             badgeRefreshExecutor.shutdown();
         }
         
-        // Utwórz nowy executor dla okresowego odświeżania
         badgeRefreshExecutor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
         badgeRefreshExecutor.scheduleAtFixedRate(
             () -> {
@@ -550,8 +514,8 @@ public class HeaderComponent extends Div {
                     ui.access(() -> updateNotificationsBadge(userId));
                 });
             },
-            3, // Opóźnienie startowe: 3 sekundy
-            3, // Okres: co 3 sekundy
+            3,
+            3,
             java.util.concurrent.TimeUnit.SECONDS
         );
     }
@@ -566,10 +530,8 @@ public class HeaderComponent extends Div {
             notificationsDialog.setDraggable(true);
             notificationsDialog.setResizable(false);
             
-            // Przycisk zamykania (ikona X) w nagłówku dialogu
             Button closeButton = new Button(VaadinIcon.CLOSE_SMALL.create(), event -> {
                 notificationsDialog.close();
-                // Odśwież badge po zamknięciu dialogu
                 if (userId != null) {
                     updateNotificationsBadge(userId);
                 }
@@ -608,11 +570,9 @@ public class HeaderComponent extends Div {
 
         notificationsDialog.add(layout);
         
-        // Oznacz wszystkie jako przeczytane po otwarciu dialogu
         notificationsDialog.addOpenedChangeListener(e -> {
             if (e.isOpened() && userId != null) {
                 orderNotificationService.markAllAsRead(userId);
-                // Opóźnij aktualizację badge, aby upewnić się, że zmiany zostały zapisane
                 getUI().ifPresent(ui -> {
                 ui.access(() -> {
                     ui.getPage().executeJs("setTimeout(function() { $0.$server.updateNotificationsBadgeFromClient('" + userId + "'); }, 100);", getElement());
@@ -653,7 +613,6 @@ public class HeaderComponent extends Div {
         
         Notification.show("Wylogowano pomyślnie", 2000, Notification.Position.TOP_CENTER);
         
-        // Odśwież stronę, aby zaktualizować header
         getUI().ifPresent(ui -> ui.getPage().reload());
     }
     

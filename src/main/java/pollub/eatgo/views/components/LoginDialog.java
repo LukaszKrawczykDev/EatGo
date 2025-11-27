@@ -92,7 +92,6 @@ public class LoginDialog extends Dialog {
         loginButton.setEnabled(false);
         loginButton.setText("Logowanie...");
         
-        // Wykonaj logowanie synchronicznie (szybka operacja)
         try {
             AuthenticationService.AuthResult result = authService.login(
                     emailField.getValue(),
@@ -110,7 +109,6 @@ public class LoginDialog extends Dialog {
                 System.out.println("Login successful - token: " + (token != null ? "present" : "null") + 
                                    ", userId: " + userId + ", role: " + role);
                 
-                // Zapisz token w localStorage używając ui.getPage().executeJs() dla lepszego kontekstu
                 getUI().ifPresent(ui -> {
                     ui.access(() -> {
                         ui.getPage().executeJs(
@@ -126,13 +124,11 @@ public class LoginDialog extends Dialog {
                             token != null ? token : "", userId, role, headerComponent.getElement()
                         );
                         
-                        // Przekieruj na odpowiednią stronę w zależności od roli
                         if ("RESTAURANT_ADMIN".equals(role)) {
                             ui.navigate("restaurant");
                         } else if ("COURIER".equals(role)) {
                             ui.navigate("courier");
                         } else {
-                            // Dla CLIENT - przeładuj stronę, aby zaktualizować UI
                             ui.getPage().reload();
                         }
                     });
@@ -151,7 +147,6 @@ public class LoginDialog extends Dialog {
     }
     
     private void saveTokenToLocalStorage(String token, Long userId, String role) {
-        // Zapisz synchronicznie - executeJs jest asynchroniczne, ale localStorage.setItem jest synchroniczne
         getElement().executeJs(
             "localStorage.setItem('eatgo-token', $0); " +
             "localStorage.setItem('eatgo-userId', $1); " +

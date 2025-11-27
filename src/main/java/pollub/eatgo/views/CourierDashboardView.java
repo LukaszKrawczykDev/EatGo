@@ -44,7 +44,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         this.authService = authService;
         this.tokenValidationService = tokenValidationService;
         
-        // Inicjalizacja ObjectMapper z obsługą dat Java 8
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         this.objectMapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -67,7 +66,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         content.getStyle().set("min-height", "calc(100vh - 80px)");
         content.getStyle().set("position", "relative");
         
-        // Przycisk odświeżania w prawym górnym rogu
         refreshButton = new Button("Odśwież", VaadinIcon.REFRESH.create());
         refreshButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         refreshButton.getStyle().set("position", "absolute");
@@ -78,7 +76,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         });
         content.add(refreshButton);
         
-        // Orders content
         ordersContent = new Div();
         ordersContent.addClassName("courier-orders-content");
         ordersContent.setWidthFull();
@@ -90,7 +87,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         H3 activeTitle = new H3("Aktywne dostawy");
         activeTitle.addClassName("courier-section-title");
         
-        // Poziomy kontener z przewijaniem dla aktywnych zamówień
         Div activeOrdersScrollContainer = new Div();
         activeOrdersScrollContainer.addClassName("orders-scroll-container");
         activeOrdersScrollContainer.setWidthFull();
@@ -113,7 +109,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         H3 deliveredTitle = new H3("Zakończone dostawy");
         deliveredTitle.addClassName("courier-section-title");
         
-        // Poziomy kontener z przewijaniem dla zakończonych zamówień
         Div deliveredOrdersScrollContainer = new Div();
         deliveredOrdersScrollContainer.addClassName("orders-scroll-container");
         deliveredOrdersScrollContainer.setWidthFull();
@@ -138,7 +133,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
     protected void onAttach(com.vaadin.flow.component.AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         
-        // Sprawdź autoryzację po stronie klienta
         getElement().executeJs(
             "const token = localStorage.getItem('eatgo-token'); " +
             "const role = localStorage.getItem('eatgo-role'); " +
@@ -147,7 +141,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
             "}"
         );
         
-        // Załaduj zamówienia po pełnym załadowaniu komponentu
         getUI().ifPresent(ui -> {
             ui.access(() -> {
                 ui.getPage().executeJs("setTimeout(function() { $0.$server.loadOrdersDelayed(); }, 200);", getElement());
@@ -157,7 +150,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
     
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        // Tylko sprawdź autoryzację, nie ładuj tutaj
     }
     
     @com.vaadin.flow.component.ClientCallable
@@ -329,7 +321,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         header.add(orderInfo, statusBadge);
         content.add(header);
         
-        // ADRES DOSTAWY - NAJWAŻNIEJSZE!
         if (order.deliveryAddress() != null) {
             Div addressSection = new Div();
             addressSection.addClassName("delivery-address-section");
@@ -360,7 +351,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
             content.add(addressSection);
         }
         
-        // Restauracja
         if (order.restaurant() != null) {
             Div restaurantSection = new Div();
             restaurantSection.addClassName("restaurant-section");
@@ -377,7 +367,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
             content.add(restaurantSection);
         }
         
-        // Lista produktów (rozwijana)
         if (order.items() != null && !order.items().isEmpty()) {
             int totalItems = order.items().stream()
                 .mapToInt(item -> item.quantity())
@@ -432,7 +421,6 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
             content.add(toggleItemsButton, itemsContainer);
         }
         
-        // Wartość zamówienia
         Div totalSection = new Div();
         totalSection.addClassName("order-total-section");
         totalSection.getStyle().set("margin-top", "1rem");
@@ -449,8 +437,7 @@ public class CourierDashboardView extends VerticalLayout implements BeforeEnterO
         
         totalSection.add(totalLabel, totalValue);
         content.add(totalSection);
-        
-        // Przycisk aktualizacji statusu dla aktywnych zamówień w statusie IN_DELIVERY
+
         if (isActive && "IN_DELIVERY".equalsIgnoreCase(order.status())) {
             HorizontalLayout actions = new HorizontalLayout();
             actions.setWidthFull();

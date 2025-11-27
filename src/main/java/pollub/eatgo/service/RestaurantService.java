@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 /**
  * Połączony serwis dla funkcjonalności "restaurant" (admin) oraz podstawowych metod klienta.
- * Usuń poprzednie duplikaty klas (zwłaszcza z pakietu service.client) aby uniknąć konfliktów.
  */
 @Service
 @RequiredArgsConstructor
@@ -41,8 +40,6 @@ public class RestaurantService {
     private final DishRepository dishRepository;
 	private final PasswordEncoder passwordEncoder;
     private final OrderNotificationService orderNotificationService;
-
-    // ----------------- ADMIN / RESTAURANT (protected endpoints) -----------------
 
     public List<OrderDto> listOrders(String adminEmail) {
         Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
@@ -85,7 +82,6 @@ public class RestaurantService {
         order.setCourier(courier);
         order.setStatus(OrderStatus.IN_DELIVERY);
         order = orderRepository.save(order);
-        // Powiadom klienta, że zamówienie jest w drodze
         orderNotificationService.addStatusChangeNotification(order, previousStatus, OrderStatus.IN_DELIVERY);
         return toOrderDto(order);
     }
@@ -160,7 +156,6 @@ public class RestaurantService {
         User courier = userRepository.findByIdAndRestaurantId(courierId, restaurant.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier not found for your restaurant"));
         
-        // Check if email is being changed and if new email is already taken
         if (!courier.getEmail().equals(req.email())) {
             if (userRepository.findByEmail(req.email()).isPresent()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User with this email already exists");
@@ -201,7 +196,6 @@ public class RestaurantService {
         return dishes.stream().map(this::toDishDto).collect(Collectors.toList());
     }
     
-    // Statistics methods
     public double getTodayRevenue(String adminEmail) {
         Restaurant restaurant = resolveRestaurantForAdmin(adminEmail);
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
@@ -295,8 +289,6 @@ public class RestaurantService {
                 })
                 .toList();
     }
-
-    // ----------------- helpers / mappers -----------------
 
     private OrderStatus parseOrderStatus(String value) {
         try {
@@ -393,13 +385,9 @@ public class RestaurantService {
     }
 
     private CourierDto toCourierDto(User u) {
-        // Kurier może mieć wiele zamówień jednocześnie, więc zawsze jest dostępny
-        // Można sprawdzić liczbę aktywnych dostaw, ale nie blokujemy przypisania
         long activeDeliveries = orderRepository.findByCourierIdOrderByCreatedAtDesc(u.getId()).stream()
             .filter(o -> o.getStatus() == OrderStatus.IN_DELIVERY)
             .count();
-        // Kurier jest dostępny (może przyjąć więcej zamówień)
-        // Można pokazać liczbę aktywnych dostaw w UI, ale nie blokujemy
         boolean isAvailable = true;
         return new CourierDto(
             u.getId(), 

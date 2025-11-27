@@ -48,7 +48,6 @@ public class CartView extends VerticalLayout {
         
         add(createContent());
         
-        // Załaduj koszyki z localStorage
         loadCarts();
     }
     
@@ -73,7 +72,6 @@ public class CartView extends VerticalLayout {
     private void displayCarts() {
         cartsContainer.removeAll();
         
-               // Pobierz koszyki z localStorage przez JavaScript
                getElement().executeJs(
                    "const carts = JSON.parse(localStorage.getItem('eatgo-carts') || '{}'); " +
                    "const restaurantIds = Object.keys(carts).filter(id => " +
@@ -126,7 +124,6 @@ public class CartView extends VerticalLayout {
         card.addClassName("restaurant-cart-card");
         card.getStyle().set("cursor", "pointer");
         
-        // Image
         Div imageDiv = new Div();
         imageDiv.addClassName("restaurant-cart-image");
         if (restaurant.imageUrl() != null && !restaurant.imageUrl().isEmpty()) {
@@ -135,15 +132,13 @@ public class CartView extends VerticalLayout {
             imageDiv.add(img);
         }
         
-        // Content
         Div content = new Div();
         content.addClassName("restaurant-cart-content");
         
         H3 name = new H3(restaurant.name());
         name.addClassName("restaurant-cart-name");
         
-        // Oblicz cenę dostawy
-        double deliveryPrice = restaurant.deliveryPrice() != null ? 
+        double deliveryPrice = restaurant.deliveryPrice() != null ?
             restaurant.deliveryPrice().doubleValue() : 0.0;
         double total = subtotal + deliveryPrice;
         
@@ -169,11 +164,9 @@ public class CartView extends VerticalLayout {
         bottom.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
         bottom.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
         
-        // Badge z liczbą pozycji
         Span badge = new Span("0");
         badge.addClassName("restaurant-cart-badge");
         
-        // Oblicz liczbę pozycji z itemsJson
         getElement().executeJs(
             "const items = JSON.parse($0); " +
             "const itemCount = items.reduce((sum, item) => sum + item.quantity, 0); " +
@@ -185,7 +178,6 @@ public class CartView extends VerticalLayout {
             }
         });
         
-        // Przycisk do finalizacji
         Button checkoutBtn = new Button("Zamów", VaadinIcon.ARROW_RIGHT.create());
         checkoutBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         checkoutBtn.addClickListener(e -> {
@@ -197,7 +189,6 @@ public class CartView extends VerticalLayout {
         content.add(name, subtotalSpan, deliveryPriceSpan, totalSpan, deliveryInfo, status, bottom);
         card.add(imageDiv, content);
         
-        // Kliknięcie na kartę również prowadzi do finalizacji
         card.addClickListener(e -> {
             if (!e.getSource().equals(checkoutBtn)) {
                 getUI().ifPresent(ui -> ui.navigate("checkout/" + restaurant.id()));
@@ -211,7 +202,6 @@ public class CartView extends VerticalLayout {
     public void setCartBadge(Long restaurantId, int count) {
         getUI().ifPresent(ui -> {
             ui.access(() -> {
-                // Znajdź badge dla tej restauracji
                 getElement().executeJs(
                     "const badge = document.getElementById('cart-badge-' + $0); " +
                     "if (badge) badge.textContent = $1;",

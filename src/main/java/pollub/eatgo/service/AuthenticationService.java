@@ -57,7 +57,6 @@ public class AuthenticationService {
                 return new AuthResult(false, null, null, null, "Email jest już w użyciu");
             }
             
-            // Walidacja roli
             if (role == null || role.isBlank()) {
                 return new AuthResult(false, null, null, null, "Rola jest wymagana");
             }
@@ -69,7 +68,6 @@ public class AuthenticationService {
                 return new AuthResult(false, null, null, null, "Nieprawidłowa rola. Użyj CLIENT lub RESTAURANT_ADMIN");
             }
             
-            // Tworzenie użytkownika
             User user = User.builder()
                     .email(email)
                     .password(passwordEncoder.encode(password))
@@ -79,7 +77,6 @@ public class AuthenticationService {
             
             user = userRepository.save(user);
             
-            // Jeśli RESTAURANT_ADMIN, tworzenie restauracji
             if (userRole == User.Role.RESTAURANT_ADMIN) {
                 if (restaurantName == null || restaurantName.isBlank() ||
                     restaurantAddress == null || restaurantAddress.isBlank()) {

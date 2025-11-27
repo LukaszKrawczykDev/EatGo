@@ -7,7 +7,6 @@ import pollub.eatgo.security.JwtUtil;
 
 /**
  * Serwis do walidacji tokenów JWT po stronie frontendu.
- * Sprawdza ważność tokena przechowywanego w localStorage.
  */
 @Service
 @RequiredArgsConstructor
@@ -15,13 +14,7 @@ import pollub.eatgo.security.JwtUtil;
 public class TokenValidationService {
     
     private final JwtUtil jwtUtil;
-    
-    /**
-     * Sprawdza czy token jest ważny (nie wygasł i jest poprawny).
-     * 
-     * @param token Token JWT do sprawdzenia
-     * @return true jeśli token jest ważny, false w przeciwnym razie
-     */
+
     public boolean isTokenValid(String token) {
         if (token == null || token.isBlank() || "null".equals(token)) {
             return false;
@@ -34,13 +27,7 @@ public class TokenValidationService {
             return false;
         }
     }
-    
-    /**
-     * Sprawdza czy token wygasł (bez sprawdzania podpisu).
-     * 
-     * @param token Token JWT do sprawdzenia
-     * @return true jeśli token wygasł, false w przeciwnym razie
-     */
+
     public boolean isTokenExpired(String token) {
         if (token == null || token.isBlank() || "null".equals(token)) {
             return true;
@@ -54,13 +41,7 @@ public class TokenValidationService {
             return true;
         }
     }
-    
-    /**
-     * Pobiera informacje o tokenie (userId, role, email) jeśli token jest ważny.
-     * 
-     * @param token Token JWT
-     * @return TokenInfo z danymi użytkownika lub null jeśli token nieprawidłowy
-     */
+
     public TokenInfo getTokenInfo(String token) {
         if (!isTokenValid(token)) {
             return null;

@@ -76,7 +76,6 @@ public class RegisterDialog extends Dialog {
         passwordField.addClassName("auth-input");
         passwordField.addValueChangeListener(e -> updatePasswordStrength(e.getValue()));
         
-        // Wskaźnik siły hasła
         passwordStrengthIndicator = new Div();
         passwordStrengthIndicator.addClassName("password-strength-indicator");
         passwordStrengthIndicator.setVisible(false);
@@ -190,7 +189,6 @@ public class RegisterDialog extends Dialog {
         Div requirementsList = new Div();
         requirementsList.addClassName("requirements-list");
         
-        // Tworzymy wymagania jako osobne elementy, które będziemy mogli łatwo aktualizować
         Span req1 = new Span("• Minimum " + MIN_PASSWORD_LENGTH + " znaków");
         req1.addClassName("requirement-item");
         req1.addClassName("requirement-unmet");
@@ -233,7 +231,6 @@ public class RegisterDialog extends Dialog {
         int strength = calculatePasswordStrength(password);
         passwordStrengthBar.setValue(strength);
         
-        // Aktualizuj kolor i tekst
         String strengthText;
         String strengthClass;
         double percentage = (strength / 4.0) * 100;
@@ -264,18 +261,15 @@ public class RegisterDialog extends Dialog {
         strengthLabel.addClassName("strength-label");
         passwordStrengthIndicator.add(strengthLabel, passwordStrengthBar);
         
-        // Aktualizuj wymagania
         updatePasswordRequirements(password);
     }
     
     private int calculatePasswordStrength(String password) {
         int strength = 0;
         
-        // Długość
         if (password.length() >= MIN_PASSWORD_LENGTH) strength++;
         if (password.length() >= 12) strength++;
         
-        // Różnorodność znaków
         boolean hasUpper = password.matches(".*[A-Z].*");
         boolean hasLower = password.matches(".*[a-z].*");
         boolean hasDigit = password.matches(".*[0-9].*");
@@ -290,7 +284,6 @@ public class RegisterDialog extends Dialog {
     
     private void updatePasswordRequirements(String password) {
         if (password == null || password.isEmpty()) {
-            // Reset wszystkich wymagań
             updateRequirementStatus("req-length", false);
             updateRequirementStatus("req-upper", false);
             updateRequirementStatus("req-lower", false);
@@ -357,7 +350,6 @@ public class RegisterDialog extends Dialog {
     }
     
     private void handleRegister() {
-        // Walidacja podstawowych pól
         if (emailField.getValue() == null || emailField.getValue().isBlank()) {
             Notification.show("Podaj adres email", 3000, Notification.Position.TOP_CENTER);
             return;
@@ -370,7 +362,6 @@ public class RegisterDialog extends Dialog {
             return;
         }
         
-        // Walidacja siły hasła
         String passwordError = validatePassword(password);
         if (passwordError != null) {
             Notification.show(passwordError, 4000, Notification.Position.TOP_CENTER);
@@ -395,7 +386,6 @@ public class RegisterDialog extends Dialog {
             return;
         }
         
-        // Walidacja pól restauracji dla RESTAURANT_ADMIN
         if ("RESTAURANT_ADMIN".equals(roleRadioGroup.getValue())) {
             if (restaurantNameField.getValue() == null || restaurantNameField.getValue().isBlank()) {
                 Notification.show("Podaj nazwę restauracji", 3000, Notification.Position.TOP_CENTER);
@@ -411,7 +401,6 @@ public class RegisterDialog extends Dialog {
         registerButton.setEnabled(false);
         registerButton.setText("Rejestracja...");
         
-        // Wykonaj rejestrację synchronicznie
         try {
             String role = roleRadioGroup.getValue();
             String restaurantName = "RESTAURANT_ADMIN".equals(role) ? restaurantNameField.getValue() : null;
@@ -440,7 +429,6 @@ public class RegisterDialog extends Dialog {
                 System.out.println("Registration successful - token: " + (token != null ? "present" : "null") + 
                                    ", userId: " + userIdStr + ", role: " + roleStr);
                 
-                // Zapisz token w localStorage używając ui.getPage().executeJs() dla lepszego kontekstu
                 getUI().ifPresent(ui -> {
                     ui.access(() -> {
                         ui.getPage().executeJs(

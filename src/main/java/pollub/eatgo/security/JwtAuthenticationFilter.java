@@ -40,14 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Pobieramy email i rolę z tokena (email powinien być w claimach)
         String email = jwtUtil.extractEmail(token);
         String role = jwtUtil.extractRole(token);
 
         List<SimpleGrantedAuthority> authorities =
                 (role != null) ? List.of(new SimpleGrantedAuthority("ROLE_" + role)) : List.of();
 
-        // ustawiamy principal jako email (czytelne) — credentials jako pusty string
         var auth = new UsernamePasswordAuthenticationToken(email, "", authorities);
         SecurityContextHolder.getContext().setAuthentication(auth);
 

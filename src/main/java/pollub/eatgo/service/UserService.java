@@ -37,7 +37,6 @@ public class UserService {
         user.setDefaultCity(settings.getDefaultCity());
         user.setTheme(settings.getTheme() != null ? settings.getTheme() : "light");
         
-        // Ustaw domyślny adres jeśli został podany
         if (settings.getDefaultAddressId() != null) {
             Optional<Address> address = addressRepository.findById(settings.getDefaultAddressId());
             if (address.isPresent() && address.get().getUser().getId().equals(userId)) {

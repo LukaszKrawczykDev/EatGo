@@ -19,7 +19,7 @@ public class AuthDto {
         @NotBlank
         private String fullName;
 		@NotBlank
-		private String role; // CLIENT albo RESTAURANT_ADMIN
+		private String role;
 		// Pola wymagane tylko dla RESTAURANT_ADMIN:
 		private String restaurantName;
 		private String restaurantAddress;

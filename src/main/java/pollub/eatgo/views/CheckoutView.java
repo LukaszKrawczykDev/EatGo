@@ -104,7 +104,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         Div content = new Div();
         content.addClassName("checkout-content");
         
-        // Przycisk powrotu do restauracji
         Button backButton = new Button("← Powrót do restauracji", VaadinIcon.ARROW_LEFT.create());
         backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         backButton.addClickListener(e -> {
@@ -114,22 +113,17 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         H2 title = new H2("Finalizacja zamówienia");
         title.addClassName("checkout-title");
         
-        // Sekcja produktów
         Div productsSection = createProductsSection();
         
-        // Sekcja adresu
         Div addressSection = createAddressSection();
         
-        // Sekcja płatności
         Div paymentSection = createPaymentSection();
         
-        // Podsumowanie
         Div summarySection = createSummarySection();
         
         content.add(backButton, title, productsSection, addressSection, paymentSection, summarySection);
         add(content);
         
-        // Załaduj dane z koszyka
         loadCartItems();
     }
     
@@ -165,7 +159,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
             return String.format("%s, %s %s", street, address.postalCode(), address.city());
         });
         
-        // Załaduj adresy użytkownika
         loadUserAddresses();
         
         Button addAddressBtn = new Button("Dodaj nowy adres", VaadinIcon.PLUS.create());
@@ -177,7 +170,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
     }
     
     private void loadUserAddresses() {
-        // Pobierz userId z localStorage przez JavaScript
         getElement().executeJs(
             "const userId = localStorage.getItem('eatgo-userId'); " +
             "if (userId) { " +
@@ -197,10 +189,9 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     Long userId = Long.parseLong(userIdStr);
                     List<AddressDto> addresses = addressService.listAddresses(userId);
                     System.out.println("CheckoutView.loadAddressesForUser: Loaded " + addresses.size() + " addresses for user " + userId);
-                    currentAddresses = new ArrayList<>(addresses); // Zapisz mutowalną listę
+                    currentAddresses = new ArrayList<>(addresses);
                     addressComboBox.setItems(currentAddresses);
                     
-                    // Załaduj domyślny adres z API
                     getElement().executeJs(
                         "const token = localStorage.getItem('eatgo-token'); " +
                         "if (token && token !== 'null' && token !== '') { " +
@@ -253,7 +244,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         getUI().ifPresent(ui -> {
             ui.access(() -> {
                 if (addressIdStr == null || addressIdStr.isEmpty() || "null".equals(addressIdStr)) {
-                    // Ustaw pierwszy adres jako domyślny
                     if (!currentAddresses.isEmpty() && addressComboBox.getValue() == null) {
                         addressComboBox.setValue(currentAddresses.get(0));
                     }
@@ -266,7 +256,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                             .ifPresent(addressComboBox::setValue);
                     } catch (NumberFormatException e) {
                         System.err.println("CheckoutView: Invalid address ID format: " + addressIdStr);
-                        // Fallback: ustaw pierwszy adres
                         if (!currentAddresses.isEmpty() && addressComboBox.getValue() == null) {
                             addressComboBox.setValue(currentAddresses.get(0));
                         }
@@ -288,14 +277,12 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         paymentMethodGroup.setValue("Gotówka");
         paymentMethodGroup.addClassName("payment-method-group");
         
-        // Pole do wpisania kodu BLIK/karty (ukryte domyślnie)
         TextField paymentCodeField = new TextField("Kod");
         paymentCodeField.setWidthFull();
         paymentCodeField.setPlaceholder("Wpisz kod");
         paymentCodeField.setVisible(false);
         paymentCodeField.addClassName("payment-code-field");
         
-        // Pokaż/ukryj pole kodu w zależności od wybranej metody płatności
         paymentMethodGroup.addValueChangeListener(e -> {
             String selected = e.getValue();
             paymentCodeField.setVisible("BLIK".equals(selected) || "Karta".equals(selected));
@@ -320,7 +307,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         summaryLayout.setSpacing(true);
         summaryLayout.setPadding(false);
         
-        // Suma pośrednia
         HorizontalLayout subtotalLayout = new HorizontalLayout();
         subtotalLayout.setWidthFull();
         subtotalLayout.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
@@ -335,7 +321,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         
         subtotalLayout.add(subtotalLabel, subtotalSpan);
         
-        // Cena dostawy
         HorizontalLayout deliveryLayout = new HorizontalLayout();
         deliveryLayout.setWidthFull();
         deliveryLayout.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
@@ -350,7 +335,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         
         deliveryLayout.add(deliveryLabel, deliveryPriceSpan);
         
-        // Suma całkowita
         HorizontalLayout totalLayout = new HorizontalLayout();
         totalLayout.setWidthFull();
         totalLayout.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
@@ -383,8 +367,7 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
     }
     
     private void loadCartItems() {
-        // Konwertuj deliveryPrice na double (BigDecimal -> double)
-        double deliveryPrice = restaurant.deliveryPrice() != null ? 
+        double deliveryPrice = restaurant.deliveryPrice() != null ?
             restaurant.deliveryPrice().doubleValue() : 0.0;
         
         getElement().executeJs(
@@ -415,9 +398,7 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     return;
                 }
                 
-                // Parsowanie itemsJson i wyświetlenie
                 try {
-                    // Wyczyść poprzednie items
                     cartItems.clear();
                     
                     getElement().executeJs(
@@ -451,7 +432,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     double price = Double.parseDouble(priceStr);
                     int quantity = Integer.parseInt(quantityStr);
                     
-                    // Zapisz item do listy cartItems
                     cartItems.add(new OrderItemRequestDto(dishId, quantity));
                     
                     Div itemCard = createCartItemCard(dishId, name, price, quantity);
@@ -478,7 +458,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         H4 itemName = new H4(name);
         itemName.addClassName("checkout-item-name");
         
-        // Cena jednostkowa
         Span itemPrice = new Span(String.format("%.2f zł", price));
         itemPrice.addClassName("checkout-item-price");
         itemPrice.getStyle().set("font-size", "0.875rem");
@@ -506,7 +485,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         removeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
         removeBtn.addClickListener(e -> removeItem(dishId));
         
-        // Całkowita cena (cena * ilość) - po prawej stronie
         double totalPrice = price * quantity;
         Span totalPriceSpan = new Span(String.format("%.2f zł", totalPrice));
         totalPriceSpan.addClassName("checkout-item-total-price");
@@ -586,21 +564,18 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
             ui.access(() -> {
                 double totalWithDelivery = subtotal + deliveryPrice;
                 
-                // aktualizuj sumę pośrednią
                 getElement().executeJs(
                         "const span = document.getElementById('checkout-subtotal-span');" +
                         "if (span) { span.textContent = $0 + ' zł'; }",
                         String.format("%.2f", subtotal)
                 );
                 
-                // aktualizuj cenę dostawy (gdyby mogła się zmieniać)
                 getElement().executeJs(
                         "const span = document.getElementById('checkout-delivery-span');" +
                         "if (span) { span.textContent = $0 + ' zł'; }",
                         String.format("%.2f", deliveryPrice)
                 );
                 
-                // aktualizuj sumę całkowitą
                 totalSpan.setText(String.format("%.2f zł", totalWithDelivery));
             });
         });
@@ -642,7 +617,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
             String postalCode = postalCodeField.getValue();
             String apartmentNumber = apartmentNumberField.getValue();
             
-            // Walidacja - numer mieszkania może być pusty
             if (street == null || street.trim().isEmpty()) {
                 Notification.show("Ulica jest wymagana.", 3000, Notification.Position.TOP_CENTER);
                 streetField.focus();
@@ -661,7 +635,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                 return;
             }
             
-            // Numer mieszkania może być pusty - to jest OK
             String finalApartmentNumber = (apartmentNumber != null && !apartmentNumber.trim().isEmpty()) ? apartmentNumber.trim() : null;
             
             System.out.println("CheckoutView: Saving address - city=" + city + ", street=" + street + ", postalCode=" + postalCode + ", apartmentNumber=" + finalApartmentNumber);
@@ -704,7 +677,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     }
                     
                     Long userId = Long.parseLong(userIdStr);
-                    // Jeśli apartmentNumber jest pustym stringiem, ustaw na null
                     String finalApartmentNumber = (apartmentNumber != null && !apartmentNumber.trim().isEmpty()) ? apartmentNumber.trim() : null;
                     AddressCreateDto newAddress = new AddressCreateDto(city.trim(), street.trim(), postalCode.trim(), finalApartmentNumber);
                     AddressDto savedAddress = addressService.addAddress(userId, newAddress);
@@ -713,14 +685,12 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     
                     Notification.show("Adres dodany pomyślnie!", 3000, Notification.Position.TOP_CENTER);
                     
-                    // Zamknij dialog przed odświeżeniem listy
                     if (addressDialog != null) {
                         System.out.println("CheckoutView.saveNewAddress: Closing dialog");
                         addressDialog.close();
                         addressDialog = null;
                     }
                     
-                    // Zaktualizuj lokalną listę i komponent bez ponownego ładowania
                     currentAddresses.add(0, savedAddress);
                     addressComboBox.setItems(currentAddresses);
                     addressComboBox.setValue(savedAddress);
@@ -744,7 +714,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                     Long addressId = Long.parseLong(addressIdStr);
                     System.out.println("CheckoutView.selectAddress: Selecting address ID: " + addressId);
                     
-                    // Użyj zapisanej listy adresów
                     AddressDto found = currentAddresses.stream()
                         .filter(a -> a.id().equals(addressId))
                         .findFirst()
@@ -754,7 +723,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                         System.out.println("CheckoutView.selectAddress: Address selected: " + found.id());
                     } else {
                         System.out.println("CheckoutView.selectAddress: Address not found in list: " + addressId);
-                        // Jeśli nie znaleziono, odśwież listę i spróbuj ponownie
                         loadUserAddresses();
                     }
                 } catch (Exception e) {
@@ -775,7 +743,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
     }
     
     private void placeOrder() {
-        // Walidacja
         if (addressComboBox.getValue() == null) {
             Notification.show("Wybierz adres dostawy", 3000, Notification.Position.TOP_CENTER);
             return;
@@ -791,10 +758,8 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
             return;
         }
         
-        // Przygotuj dane zamówienia
         AddressDto selectedAddress = addressComboBox.getValue();
         
-        // Przygotuj JSON dla items
         String itemsJson = cartItems.stream()
             .map(item -> String.format("{\"dishId\":%d,\"quantity\":%d}", item.dishId(), item.quantity()))
             .collect(Collectors.joining(",", "[", "]"));
@@ -803,7 +768,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                           ", addressId: " + selectedAddress.id() + 
                           ", items: " + itemsJson);
         
-        // Wyślij zamówienie przez API - przekonwertuj Long na String
         getElement().executeJs(
             "const token = localStorage.getItem('eatgo-token'); " +
             "if (!token) { " +
@@ -860,7 +824,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                 try {
                     System.out.println("CheckoutView.onOrderSuccess: Order JSON: " + orderJson);
                     
-                    // Wyczyść koszyk dla tej restauracji
                     getElement().executeJs(
                         "const carts = JSON.parse(localStorage.getItem('eatgo-carts') || '{}'); " +
                         "delete carts[$0]; " +
@@ -869,7 +832,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
                         String.valueOf(restaurantId)
                     );
                     
-                    // Pobierz szczegóły zamówienia z API
                     getElement().executeJs(
                         "const token = localStorage.getItem('eatgo-token'); " +
                         "const orderData = JSON.parse($0); " +
@@ -901,7 +863,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         getUI().ifPresent(ui -> {
             ui.access(() -> {
                 try {
-                    // Parsuj JSON z obsługą dat Java 8
                     com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                     mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
                     mapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -933,7 +894,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         content.setSpacing(true);
         content.setPadding(true);
         
-        // Status zamówienia
         Div statusDiv = new Div();
         statusDiv.addClassName("order-confirmation-status");
         Span statusLabel = new Span("Status: ");
@@ -942,7 +902,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         statusValue.getStyle().set("color", getStatusColor(orderDetails.status()));
         statusDiv.add(statusLabel, statusValue);
         
-        // Numer zamówienia
         Div orderIdDiv = new Div();
         orderIdDiv.addClassName("order-confirmation-id");
         Span orderIdLabel = new Span("Numer zamówienia: ");
@@ -950,7 +909,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         Span orderIdValue = new Span("#" + orderDetails.id());
         orderIdDiv.add(orderIdLabel, orderIdValue);
         
-        // Restauracja
         Div restaurantDiv = new Div();
         restaurantDiv.addClassName("order-confirmation-restaurant");
         Span restaurantLabel = new Span("Restauracja: ");
@@ -958,7 +916,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         Span restaurantValue = new Span(orderDetails.restaurant().name());
         restaurantDiv.add(restaurantLabel, restaurantValue);
         
-        // Adres dostawy
         Div addressDiv = new Div();
         addressDiv.addClassName("order-confirmation-address");
         Span addressLabel = new Span("Adres dostawy: ");
@@ -971,7 +928,6 @@ public class CheckoutView extends VerticalLayout implements HasUrlParameter<Stri
         Span addressValue = new Span(fullAddress);
         addressDiv.add(addressLabel, addressValue);
         
-        // Wartość zamówienia
         Div totalDiv = new Div();
         totalDiv.addClassName("order-confirmation-total");
         totalDiv.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
